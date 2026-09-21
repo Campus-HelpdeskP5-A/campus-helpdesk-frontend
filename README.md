@@ -1,71 +1,16 @@
-# Campus Helpdesk Frontend
+# React + Vite
 
-Frontend application for the Campus Helpdesk system.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Responsibilities
+Currently, two official plugins are available:
 
-The frontend is responsible for:
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-- User interface
-- User interaction
-- Communication with backend APIs
-- Client-side validation
-- Authentication interface
-- Displaying tickets and system data
+## React Compiler
 
-## Technology Stack
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-> To be updated when the source code is available.
+## Expanding the ESLint configuration
 
-- Framework:
-- Runtime:
-- Build Tool:
-- API Client:
-
-## Project Structure
-
-    frontend/
-    +-- src/
-    +-- Dockerfile
-    +-- package.json
-    +-- README.md
-
-## Environment Variables
-
-Create a local `.env` file based on `.env.example`.
-
-Never commit real secrets or credentials.
-
-## Running Locally
-
-> Instructions will be added when the source code and development commands are available.
-
-## Testing
-
-Run the project tests before creating a Pull Request.
-
-Testing instructions will be documented here once the test framework is configured.
-
-## Backend Integration
-
-The frontend communicates with the Campus Helpdesk backend through its API.
-
-The backend API contract is maintained in:
-
-campus-helpdesk-infra/docs/openapi.yaml
-
-Any API contract changes should be coordinated with the backend team.
-
-## Docker
-
-The frontend is containerized using Docker.
-
-The Docker configuration will be finalized when the application source code is available.
-
-## Contribution
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-Internal project for Campus Helpdesk.
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
