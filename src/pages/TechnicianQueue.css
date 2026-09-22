@@ -1,0 +1,137 @@
+.tq-page {
+  max-width: 1150px;
+  margin: 20px auto;
+  background-color: #e8ddd3;
+  border: 2px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 30px 40px;
+  color: #4a3333;
+}
+
+.tq-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.tq-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tq-logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6b4c4c;
+}
+
+.tq-title {
+  font-size: 20px;
+  color: #4a3333;
+}
+
+.tq-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.tq-sort-label {
+  font-size: 16px;
+  color: #4a3333;
+}
+
+.tq-sort-select {
+  background-color: #6b4c4c;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  min-width: 140px;
+}
+
+.tq-sla-label {
+  font-size: 16px;
+  color: #4a3333;
+}
+
+.tq-total-sla-box {
+  width: 90px;
+  height: 30px;
+  background-color: #f4c430;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.tq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+.tq-card {
+  background-color: #e8ddd3;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 25px;
+  text-align: center;
+}
+
+.tq-card-id {
+  font-size: 20px;
+  color: #4a3333;
+  margin-bottom: 12px;
+}
+
+.tq-card-title {
+  font-size: 17px;
+  color: #4a3333;
+  margin-bottom: 14px;
+}
+
+.tq-card-row {
+  font-size: 15px;
+  color: #4a3333;
+  margin-bottom: 10px;
+}
+
+.tq-sla-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 18px 0;
+}
+
+.tq-sla-bar {
+  height: 24px;
+  flex: 1;
+  border-radius: 2px;
+}
+
+.tq-sla-bar.high { background-color: #cc2222; width: 25%; flex: none; }
+.tq-sla-bar.medium { background-color: #e8a628; width: 55%; flex: none; }
+.tq-sla-bar.low { background-color: #4a9c2e; width: 85%; flex: none; }
+
+.tq-view-btn {
+  background-color: #6b4c4c;
+  color: #fff;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.tq-view-btn:hover {
+  background-color: #543a3a;
+}
