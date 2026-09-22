@@ -8,6 +8,7 @@ import Register from './pages/auth/Register'
 import PendingApproval from './pages/auth/PendingApproval'
 
 import ReporterDashboard from './pages/reporter/Dashboard'
+import AllTickets from './pages/reporter/AllTickets'
 import CreateTicket from './pages/reporter/CreateTicket'
 
 import TicketDetails from './pages/shared/TicketDetails'
@@ -52,6 +53,7 @@ export default function App() {
             element={<ProtectedRoute roles={['reporter']}><AppLayout role="reporter" /></ProtectedRoute>}
           >
             <Route index element={<ReporterDashboard />} />
+            <Route path="tickets" element={<AllTickets />} />
             <Route path="new" element={<CreateTicket />} />
           </Route>
 

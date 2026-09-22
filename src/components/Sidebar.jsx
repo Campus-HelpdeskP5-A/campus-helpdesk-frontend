@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext'
 
 const NAV_BY_ROLE = {
   reporter: [
-    { to: '/reporter', label: 'Dashboard', end: true },
-    { to: '/reporter/new', label: 'Create ticket' },
-    { to: '/notifications', label: 'Notifications' },
+  { to: '/reporter', label: 'Dashboard', end: true },
+  { to: '/reporter/tickets', label: 'All tickets' },
+  { to: '/reporter/new', label: 'Create ticket' },
+  { to: '/notifications', label: 'Notifications' },
   ],
   agent: [
     { to: '/agent', label: 'Dashboard', end: true },
