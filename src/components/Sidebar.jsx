@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
+import { useAuth } from '../context/AuthContext'
 
 const NAV_BY_ROLE = {
   reporter: [
@@ -30,6 +31,14 @@ const NAV_BY_ROLE = {
 
 export default function Sidebar({ role, userName }) {
   const items = NAV_BY_ROLE[role] || []
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <aside className="sidebar">
       <div className="sb-brand">
@@ -47,7 +56,12 @@ export default function Sidebar({ role, userName }) {
           </NavLink>
         ))}
       </nav>
-      <div className="foot">{userName} · Logout</div>
+      <div className="foot">
+        {userName} ·{' '}
+        <span onClick={handleLogout} style={{ cursor: 'pointer', textDecoration: 'underline' }}>
+          Logout
+        </span>
+      </div>
     </aside>
   )
 }
