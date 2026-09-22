@@ -16,9 +16,8 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault()
     try {
-      const result = await register({ ...form, role: 'reporter' })
-      if (result.status === 'pending') navigate('/pending-approval')
-      else navigate('/login')
+      await register(form)
+      navigate('/dashboard')
     } catch {
       // error surfaced via useAuth().error
     }
