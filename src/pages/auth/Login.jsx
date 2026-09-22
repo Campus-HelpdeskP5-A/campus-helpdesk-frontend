@@ -4,13 +4,12 @@ import { ErrorBanner } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
 
 const ROLE_HOME = {
-  reporter: '/reporter',
-  agent: '/agent',
-  technician: '/technician',
-  manager: '/manager',
-  auditor: '/auditor',
+  REPORTER: '/reporter',
+  AGENT: '/agent',
+  TECHNICIAN: '/technician',
+  MANAGER: '/manager',
+  AUDITOR: '/auditor',
 }
-
 export default function Login() {
   const { login, loading, error } = useAuth()
   const navigate = useNavigate()
