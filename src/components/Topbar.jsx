@@ -11,8 +11,15 @@ export default function Topbar({ showSearch = true, onSearch }) {
   const menuRef = useRef(null)
 
   useEffect(() => {
-    getNotifications().then((list) => setHasUnread(list.some((n) => !n.read)))
-  }, [])
+  getNotifications()
+    .then((result) => {
+      const list = Array.isArray(result) ? result : result?.data || []
+      setHasUnread(list.some((n) => !n.read))
+    })
+    .catch(() => {
+      setHasUnread(false)
+    })
+}, [])
 
   // قفل القائمة لو ضغطت في أي مكان تاني بره الأيقونة
   useEffect(() => {
