@@ -1,15 +1,28 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getNotifications } from '../api/notifications'
 
 export default function Topbar({ showSearch = true, onSearch }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [hasUnread, setHasUnread] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
 
   useEffect(() => {
     getNotifications().then((list) => setHasUnread(list.some((n) => !n.read)))
+  }, [])
+
+  // قفل القائمة لو ضغطت في أي مكان تاني بره الأيقونة
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const initials = (user?.name || '?')
@@ -37,15 +50,49 @@ export default function Topbar({ showSearch = true, onSearch }) {
         >
           🔔
         </button>
-        <div
-          className="avatar"
-          title={`${user?.name || ''} — logout`}
-          onClick={() => {
-            logout()
-            navigate('/login')
-          }}
-        >
-          {initials}
+
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <div
+            className="avatar"
+            title={user?.name || ''}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {initials}
+          </div>
+
+          {menuOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 42,
+                left: 0,
+                minWidth: 200,
+                background: 'var(--white)',
+                border: '1px solid var(--cream-dark)',
+                borderRadius: 10,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                padding: 14,
+                zIndex: 50,
+              }}
+            >
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>
+                {user?.name}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, wordBreak: 'break-all' }}>
+                {user?.email}
+              </div>
+              <button
+                className="btn ghost sm"
+                style={{ width: '100%' }}
+                onClick={() => {
+                  logout()
+                  navigate('/login')
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
