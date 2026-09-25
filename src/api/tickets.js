@@ -75,7 +75,7 @@ const URGENCY_TO_PRIORITY = { Low: 'low', Medium: 'medium', High: 'high', Critic
 // ===== ADJUST TO BACKEND (create ticket) =====
 // true  -> POST /tickets واحد multipart والملف جواه
 // false -> POST /tickets JSON وبعده POST /tickets/:id/attachments للملف
-const MULTIPART_CREATE = false
+const MULTIPART_CREATE = true
 const URGENCY_TO_API = { Low: 'LOW', Medium: 'MEDIUM', High: 'HIGH', Critical: 'CRITICAL' }
 const CATEGORY_TO_TEAM = { Network: 'IT Support' }
 
@@ -195,9 +195,7 @@ export async function createTicket(payload, reporterName) {
     title,
     description,
     category_id: category,
-    location_id: location,
-    impact: String(impact || 'MEDIUM').toUpperCase(),
-    urgency: URGENCY_TO_API[urgency] || String(urgency || 'MEDIUM').toUpperCase(),
+    urgency: URGENCY_TO_API[urgency] || urgency,
     ...(asset ? { asset_id: asset } : {}),
   }
 

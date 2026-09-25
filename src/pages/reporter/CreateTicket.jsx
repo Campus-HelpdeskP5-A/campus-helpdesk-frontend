@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { createTicket } from '../../api/tickets'
 import { getCategories, getLocations } from '../../api/config'
 import { ErrorBanner } from '../../components/UI'
+import EmergencyBanner from '../../components/EmergencyBanner'
+import { containsEmergencyKeyword } from '../../utils/emergencyDetection'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 
@@ -21,7 +23,11 @@ export default function CreateTicket() {
   const { showToast } = useToast()
   const fileInputRef = useRef(null)
   const [form, setForm] = useState({
+<<<<<<< HEAD
     title: '', description: '', category: '', location: '', asset: '', impact: 'Medium', urgency: 'Medium',
+=======
+    title: '', description: '', category: '', location: '', asset: '', urgency: 'Medium', impact: 'Medium',
+>>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
   })
   const [attachment, setAttachment] = useState(null)
   const [attachmentError, setAttachmentError] = useState(null)
@@ -29,6 +35,7 @@ export default function CreateTicket() {
   const [error, setError] = useState(null)
   const [categories, setCategories] = useState([])
   const [locations, setLocations] = useState([])
+<<<<<<< HEAD
 
   useEffect(() => {
     Promise.all([getCategories(), getLocations()])
@@ -37,6 +44,18 @@ export default function CreateTicket() {
         setLocations(locationList)
       })
       .catch(() => setError('تعذر تحميل بيانات الفئات والمواقع. حدّث الصفحة وحاول تاني.'))
+=======
+
+  const isEmergency = containsEmergencyKeyword(form.title) || containsEmergencyKeyword(form.description)
+
+  useEffect(() => {
+    getCategories()
+      .then((list) => setCategories(list.filter((c) => c.active !== false)))
+      .catch(() => setError('تعذر تحميل الفئات. حدّث الصفحة وحاول تاني.'))
+    getLocations()
+      .then(setLocations)
+      .catch(() => setError('تعذر تحميل الأماكن. حدّث الصفحة وحاول تاني.'))
+>>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
   }, [])
 
   function update(field, value) {
@@ -76,12 +95,19 @@ export default function CreateTicket() {
       ...form,
       title: form.title.trim(),
       description: form.description.trim(),
-      location: form.location.trim(),
       asset: form.asset.trim(),
       impact: form.impact,
     }
+<<<<<<< HEAD
     if (!clean.title || !clean.description || !clean.location || !clean.impact) {
+=======
+       if (!clean.title || !clean.description || !clean.location) {
+>>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
       setError('Title و Description و Building/room مطلوبين ومينفعش يكونوا مسافات بس.')
+      return
+    }
+    if (clean.asset && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean.asset)) {
+      setError('Asset ID لازم يكون UUID صحيح. سيبه فاضي لحد ما الباك يضيف endpoint للأجهزة.')
       return
     }
     setSubmitting(true)
@@ -102,6 +128,7 @@ export default function CreateTicket() {
     <div style={{ maxWidth: 560 }}>
       <h2 style={{ marginBottom: 20 }}>Create ticket</h2>
       <ErrorBanner>{error}</ErrorBanner>
+      {isEmergency && <EmergencyBanner />}
       <form onSubmit={handleSubmit}>
         <div className="field">
           <label>Title</label>
@@ -126,7 +153,11 @@ export default function CreateTicket() {
             <select required value={form.location} onChange={(e) => update('location', e.target.value)}>
               <option value="">Select location</option>
               {locations.map((l) => (
+<<<<<<< HEAD
                 <option key={l.id} value={l.id}>{l.label}</option>
+=======
+                <option key={l.id} value={l.id}>{l.name}</option>
+>>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
               ))}
             </select>
           </div>
@@ -150,9 +181,16 @@ export default function CreateTicket() {
               <option>Low</option>
               <option>Medium</option>
               <option>High</option>
-              <option>Critical</option>
             </select>
           </div>
+        </div>
+        <div className="field">
+          <label>Impact</label>
+          <select value={form.impact} onChange={(e) => update('impact', e.target.value)}>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
         </div>
         <div className="field">
           <label>Attachment</label>

@@ -2,6 +2,7 @@ import { api, USE_MOCKS, mockDelay, asList } from './client'
 import { categoriesMock } from '../mock/notifications'
 
 let categoriesStore = [...categoriesMock]
+let locationsStore = null
 
 /** GET /categories -> Category[] */
 export async function getLocations() {
@@ -59,6 +60,27 @@ export async function toggleCategory(id, active) {
     return mockDelay({ success: true })
   }
   return api.patch(`/config/categories/${id}`, { active })
+}
+
+/** GET /locations -> Location[] */
+export async function getLocations() {
+  if (USE_MOCKS) {
+    if (!locationsStore) {
+      locationsStore = [
+        { id: 'loc-1', name: 'Engineering Building — LAB-101' },
+        { id: 'loc-2', name: 'Engineering Building — LAB-202' },
+        { id: 'loc-3', name: 'Administration Building — OFF-105' },
+        { id: 'loc-4', name: 'Library — LIB-201' },
+        { id: 'loc-5', name: 'Science Building — SCI-110' },
+        { id: 'loc-6', name: 'Student Center — STU-301' },
+      ]
+    }
+    return mockDelay(locationsStore)
+  }
+  return asList(await api.get('/locations')).map((l) => ({
+    id: l.id ?? l.location_id,
+    name: [l.building, l.room_code].filter(Boolean).join(' — '),
+  }))
 }
 
 // Other configuration endpoints your backend will likely also expose:
