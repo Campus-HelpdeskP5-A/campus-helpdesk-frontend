@@ -66,3 +66,18 @@ export async function toggleCategory(id, active) {
 //   GET/POST /config/sla-profiles   — SLA response/resolution targets
 //   GET/POST /config/business-hours — working hours per team
 //   GET/POST /config/priority-matrix — urgency+impact -> priority rules
+
+export async function createSupportTeam(payload) { return api.post('/support-teams', payload) }
+export async function updateSupportTeam(id, payload) { return api.put(`/support-teams/${id}`, payload) }
+
+export async function getBusinessHours() { return asList(await api.get('/sla/business-hours')) }
+export async function createBusinessHours(payload) { return api.post('/sla/business-hours', payload) }
+export async function updateBusinessHours(id, payload) { return api.put(`/sla/business-hours/${id}`, payload) }
+
+export async function getSlaProfiles() { return asList(await api.get('/sla/profiles')) }
+export async function createSlaProfile(payload) { return api.post('/sla/profiles', payload) }
+export async function updateSlaProfile(id, payload) { return api.put(`/sla/profiles/${id}`, payload) }
+
+export async function getPriorityMatrix() { return asList(await api.get('/sla/priority-matrix')) }
+export async function createPriorityMatrix(payload) { return api.post('/sla/priority-matrix', payload) }
+export async function updatePriorityMatrix(id, payload) { return api.put(`/sla/priority-matrix/${id}`, payload) }
