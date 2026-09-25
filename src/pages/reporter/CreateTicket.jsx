@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createTicket } from '../../api/tickets'
-import { getCategories } from '../../api/config'
+import { getCategories, getLocations } from '../../api/config'
 import { ErrorBanner } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -21,18 +21,22 @@ export default function CreateTicket() {
   const { showToast } = useToast()
   const fileInputRef = useRef(null)
   const [form, setForm] = useState({
-    title: '', description: '', category: '', location: '', asset: '', urgency: 'Medium',
+    title: '', description: '', category: '', location: '', asset: '', impact: 'Medium', urgency: 'Medium',
   })
   const [attachment, setAttachment] = useState(null)
   const [attachmentError, setAttachmentError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [categories, setCategories] = useState([])
+  const [locations, setLocations] = useState([])
 
   useEffect(() => {
-    getCategories()
-      .then((list) => setCategories(list.filter((c) => c.active !== false)))
-      .catch(() => setError('تعذر تحميل الفئات. حدّث الصفحة وحاول تاني.'))
+    Promise.all([getCategories(), getLocations()])
+      .then(([categoryList, locationList]) => {
+        setCategories(categoryList.filter((c) => c.active !== false))
+        setLocations(locationList)
+      })
+      .catch(() => setError('تعذر تحميل بيانات الفئات والمواقع. حدّث الصفحة وحاول تاني.'))
   }, [])
 
   function update(field, value) {
@@ -74,8 +78,9 @@ export default function CreateTicket() {
       description: form.description.trim(),
       location: form.location.trim(),
       asset: form.asset.trim(),
+      impact: form.impact,
     }
-    if (!clean.title || !clean.description || !clean.location) {
+    if (!clean.title || !clean.description || !clean.location || !clean.impact) {
       setError('Title و Description و Building/room مطلوبين ومينفعش يكونوا مسافات بس.')
       return
     }
@@ -118,13 +123,26 @@ export default function CreateTicket() {
           </div>
           <div className="field">
             <label>Building / room</label>
-            <input required maxLength={120} placeholder="مبنى 3 — قاعة 101" value={form.location} onChange={(e) => update('location', e.target.value)} />
+            <select required value={form.location} onChange={(e) => update('location', e.target.value)}>
+              <option value="">Select location</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>{l.label}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="grid2">
           <div className="field">
             <label>Optional asset</label>
             <input maxLength={50} placeholder="رقم الجهاز (اختياري)" value={form.asset} onChange={(e) => update('asset', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Impact</label>
+            <select value={form.impact} onChange={(e) => update('impact', e.target.value)}>
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
           </div>
           <div className="field">
             <label>Urgency</label>
