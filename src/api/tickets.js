@@ -198,13 +198,14 @@ export async function createTicket(payload, reporterName) {
   // Attachments are stored through the dedicated attachment endpoint.
   // The ticket API intentionally remains JSON-based.
   if (file) {
-    const fd = new FormData()
-    fd.append('ticket_id', created.id)
-    fd.append('file_name', file.name)
-    fd.append('mime_type', file.type || 'application/octet-stream')
-    fd.append('file_size', String(file.size))
-    fd.append('storage_path', file.name)
-    await api.post('/attachments', fd)
+    await api.post('/attachments', {
+      ticket_id: created.id,
+      file_uuid: crypto.randomUUID(),
+      file_name: file.name,
+      mime_type: file.type || 'application/octet-stream',
+      file_size: file.size,
+      storage_path: file.name,
+    })
   }
 
   return created
