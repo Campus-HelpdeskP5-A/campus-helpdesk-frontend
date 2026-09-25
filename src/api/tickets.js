@@ -211,6 +211,18 @@ export async function createTicket(payload, reporterName) {
   return created
 }
 
+/** POST /tickets/:id/confirm-resolution */
+export async function confirmResolution(id) {
+  const result = await api.post(`/tickets/${id}/confirm-resolution`)
+  return normalizeTicket(unwrap(result))
+}
+
+/** POST /tickets/:id/reopen */
+export async function reopenTicket(id) {
+  const result = await api.post(`/tickets/${id}/reopen`)
+  return normalizeTicket(unwrap(result))
+}
+
 /** PATCH /tickets/:id/status */
 export async function updateTicketStatus(id, status) {
   if (USE_MOCKS) {
