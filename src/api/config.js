@@ -4,6 +4,15 @@ import { categoriesMock } from '../mock/notifications'
 let categoriesStore = [...categoriesMock]
 
 /** GET /categories -> Category[] */
+export async function getLocations() {
+  if (USE_MOCKS) return mockDelay([])
+  return asList(await api.get('/locations')).map((l) => ({
+    ...l,
+    id: l.id ?? l.location_id,
+    label: l.label ?? [l.building, l.floor, l.room_code].filter(Boolean).join(' — '),
+  }))
+}
+
 export async function getCategories() {
   if (USE_MOCKS) return mockDelay(categoriesStore)
   return asList(await api.get('/categories')).map((c) => ({
