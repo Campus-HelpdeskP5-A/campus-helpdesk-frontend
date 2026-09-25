@@ -15,20 +15,31 @@ export default function RecentChanges() {
     <div>
       <h2 style={{ marginBottom: 18 }}>Recent changes</h2>
       <div className="btn-row" style={{ marginBottom: 14 }}>
-        <button className="btn ghost sm">User ▾</button>
-        <button className="btn ghost sm">Action ▾</button>
-        <button className="btn ghost sm">Entity ▾</button>
-        <button className="btn ghost sm">Date ▾</button>
+        <button className="btn ghost sm">User {'\u25BE'}</button>
+        <button className="btn ghost sm">Action {'\u25BE'}</button>
+        <button className="btn ghost sm">Entity {'\u25BE'}</button>
+        <button className="btn ghost sm">Date {'\u25BE'}</button>
       </div>
       <table className="mini">
-        <thead><tr><th>User</th><th>Action</th><th>Entity</th><th>Date</th></tr></thead>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Date</th>
+          </tr>
+        </thead>
         <tbody>
           {log.map((entry) => (
-            <tr key={entry.id}>
-              <td>{entry.user}</td>
+            <tr key={entry.audit_log_id}>
+              <td>{entry.actor_name || 'System'}</td>
               <td>{entry.action}</td>
-              <td>{entry.entity}</td>
-              <td>{entry.at}</td>
+              <td>{entry.entity_type}</td>
+              <td>
+                {entry.created_at
+                  ? new Date(entry.created_at).toLocaleString()
+                  : '\\u2014'}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -36,3 +47,4 @@ export default function RecentChanges() {
     </div>
   )
 }
+
