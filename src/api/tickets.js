@@ -86,6 +86,7 @@ function formatTime(date) {
 /** GET /tickets */
 export async function getTickets(filters = {}) {
   let list
+  let paginationTotal = null
 
   if (USE_MOCKS) {
     list = [...mockStore]
@@ -125,11 +126,13 @@ export async function getTickets(filters = {}) {
 
     const query = params.toString()
     const result = await api.get(`/tickets${query ? `?${query}` : ''}`)
+    paginationTotal = result?.pagination?.total ?? result?.data?.pagination?.total ?? null
 
     list = asList(result)
   }
 
   list = list.map(normalizeTicket)
+  if (paginationTotal !== null) list.total = paginationTotal
 
   // البحث النصي بيتعمل هنا في الحالتين (الـ mock والـ backend)
   if (filters.q) {
