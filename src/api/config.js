@@ -13,6 +13,26 @@ export async function getLocations() {
   }))
 }
 
+/** GET /support-teams -> SupportTeam[] */
+export async function getSupportTeams() {
+  if (USE_MOCKS) return mockDelay([])
+  return asList(await api.get('/support-teams')).map((t) => ({
+    ...t,
+    id: t.id ?? t.support_team_id,
+    name: t.name ?? t.team_name,
+  }))
+}
+
+/** GET /users/technicians -> Technician[] */
+export async function getTechnicians() {
+  if (USE_MOCKS) return mockDelay([])
+  return asList(await api.get('/users/technicians')).map((u) => ({
+    ...u,
+    id: u.id ?? u.user_id,
+    name: u.name ?? u.full_name,
+  }))
+}
+
 export async function getCategories() {
   if (USE_MOCKS) return mockDelay(categoriesStore)
   return asList(await api.get('/categories')).map((c) => ({
