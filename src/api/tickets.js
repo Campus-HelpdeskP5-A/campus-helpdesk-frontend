@@ -118,6 +118,11 @@ export async function getTickets(filters = {}) {
       params.set('category_id', filters.category_id)
     }
 
+    if (filters.team_id) params.set('team_id', filters.team_id)
+    if (filters.assignee_id) params.set('assignee_id', filters.assignee_id)
+    if (filters.location_id) params.set('location_id', filters.location_id)
+    if (filters.due) params.set('due', filters.due)
+
     const query = params.toString()
     const result = await api.get(`/tickets${query ? `?${query}` : ''}`)
 
