@@ -12,7 +12,7 @@ let mockStore = [...ticketsMock]
 const STATUS_FROM_API = {
   OPEN: 'open',
   IN_PROGRESS: 'progress',
-  PENDING: 'pending',
+  WAITING: 'pending',
   RESOLVED: 'done',
   CLOSED: 'done',
   NEW: 'open',
@@ -21,7 +21,7 @@ const STATUS_FROM_API = {
   REOPENED: 'open',
   WAITING: 'pending',
 }
-const STATUS_TO_API = { open: 'OPEN', progress: 'IN_PROGRESS', pending: 'PENDING', done: 'RESOLVED' }
+const STATUS_TO_API = { open: 'OPEN', progress: 'IN_PROGRESS', pending: 'WAITING', done: 'RESOLVED' }
 
 function normalizeStatus(status) {
   if (!status) return 'open'
@@ -75,7 +75,7 @@ const URGENCY_TO_PRIORITY = { Low: 'low', Medium: 'medium', High: 'high', Critic
 // ===== ADJUST TO BACKEND (create ticket) =====
 // true  -> POST /tickets واحد multipart والملف جواه
 // false -> POST /tickets JSON وبعده POST /tickets/:id/attachments للملف
-const MULTIPART_CREATE = true
+const MULTIPART_CREATE = false
 const URGENCY_TO_API = { Low: 'LOW', Medium: 'MEDIUM', High: 'HIGH', Critical: 'CRITICAL' }
 const CATEGORY_TO_TEAM = { Network: 'IT Support' }
 
@@ -182,25 +182,31 @@ export async function createTicket(payload, reporterName) {
     return mockDelay(normalizeTicket(newTicket))
   }
 
-  const { file, category, urgency, asset, title, description, location } = payload
+  const { file, category, urgency, impact, asset, title, description, location } = payload
   const body = {
-    title, description, location,
+    title,
+    description,
     category_id: category,
-    urgency: URGENCY_TO_API[urgency] || urgency,
+    location_id: location,
+    impact: String(impact || 'MEDIUM').toUpperCase(),
+    urgency: URGENCY_TO_API[urgency] || String(urgency || 'MEDIUM').toUpperCase(),
     ...(asset ? { asset_id: asset } : {}),
   }
-  if (MULTIPART_CREATE) {
-    const fd = new FormData()
-    Object.entries(body).forEach(([k, v]) => fd.append(k, v))
-    if (file) fd.append('attachment', file)
-    return normalizeTicket(unwrap(await api.post('/tickets', fd)))
-  }
+
   const created = normalizeTicket(unwrap(await api.post('/tickets', body)))
+
+  // Attachments are stored through the dedicated attachment endpoint.
+  // The ticket API intentionally remains JSON-based.
   if (file) {
     const fd = new FormData()
-    fd.append('file', file)
-    await api.post(`/tickets/${created.id}/attachments`, fd)
+    fd.append('ticket_id', created.id)
+    fd.append('file_name', file.name)
+    fd.append('mime_type', file.type || 'application/octet-stream')
+    fd.append('file_size', String(file.size))
+    fd.append('storage_path', file.name)
+    await api.post('/attachments', fd)
   }
+
   return created
 }
 
