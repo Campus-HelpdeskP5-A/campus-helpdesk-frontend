@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getTicketById, updateTicketStatus, addComment } from '../../api/tickets'
+import { getTicketById, updateTicketStatus, addComment, confirmResolution, reopenTicket } from '../../api/tickets'
+import { createFeedback, getTicketFeedback } from '../../api/feedback'
 import { Tag, LoadingState, EmptyState, Card } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
 
@@ -13,12 +14,15 @@ export default function TicketDetails() {
   // undefined = لسه بيحمّل، null = التذكرة مش موجودة
   const [ticket, setTicket] = useState(undefined)
   const [comment, setComment] = useState('')
+  const [feedback, setFeedback] = useState([])
+  const [rating, setRating] = useState('5')
+  const [feedbackComment, setFeedbackComment] = useState('')
 
   useEffect(() => {
     let cancelled = false
     setTicket(undefined)
-    getTicketById(id)
-      .then((t) => { if (!cancelled) setTicket(t) })
+    Promise.all([getTicketById(id), getTicketFeedback(id)])
+      .then(([t, f]) => { if (!cancelled) { setTicket(t); setFeedback(f) } })
       .catch(() => { if (!cancelled) setTicket(null) })
     return () => { cancelled = true }
   }, [id])
@@ -38,6 +42,26 @@ export default function TicketDetails() {
   async function handleStatusChange(status) {
     const updated = await updateTicketStatus(id, status)
     setTicket(updated)
+  }
+
+  async function handleConfirmResolution() {
+    const updated = await confirmResolution(id)
+    setTicket(updated)
+  }
+
+  async function handleReopen() {
+    const updated = await reopenTicket(id)
+    setTicket(updated)
+  }
+
+  async function handleFeedback() {
+    await createFeedback({
+      ticket_id: id,
+      rating: Number(rating),
+      comment: feedbackComment.trim() || null,
+    })
+    setFeedback(await getTicketFeedback(id))
+    setFeedbackComment('')
   }
 
   async function handleAddComment() {
@@ -101,6 +125,35 @@ export default function TicketDetails() {
               <button className="btn sm primary" onClick={handleAddComment}>Send</button>
             </div>
           </Card>
+          {role === 'reporter' && ticket.status === 'done' && (
+            <Card title="Resolution">
+              <div className="btn-row">
+                <button className="btn sm primary" onClick={handleConfirmResolution}>Confirm resolution</button>
+                <button className="btn sm ghost" onClick={handleReopen}>Reopen ticket</button>
+              </div>
+            </Card>
+          )}
+          {role === 'reporter' && (ticket.status === 'done') && (
+            <Card title="Satisfaction">
+              <div className="field">
+                <label>Rating</label>
+                <select value={rating} onChange={(e) => setRating(e.target.value)}>
+                  <option value="5">5 — Excellent</option>
+                  <option value="4">4 — Good</option>
+                  <option value="3">3 — Okay</option>
+                  <option value="2">2 — Poor</option>
+                  <option value="1">1 — Very poor</option>
+                </select>
+              </div>
+              <textarea value={feedbackComment} onChange={(e) => setFeedbackComment(e.target.value)} placeholder="Optional feedback…" />
+              <button className="btn sm primary" onClick={handleFeedback}>Submit feedback</button>
+            </Card>
+          )}
+          {feedback.length > 0 && (
+            <Card title="Satisfaction feedback">
+              {feedback.map((f) => <div className="item" key={f.feedback_id}><span>{f.rating}/5</span><span>{f.comment || 'No comment'}</span></div>)}
+            </Card>
+          )}
           {role !== 'reporter' && role !== 'auditor' && (
             <Card title="Role actions">
               <div className="btn-row">
