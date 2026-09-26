@@ -43,23 +43,23 @@ export async function getCategories() {
   }))
 }
 
-/** POST /config/categories { name, team } -> Category */
+/** POST /categories { name, team } -> Category */
 export async function addCategory(payload) {
   if (USE_MOCKS) {
     const newCat = { id: Date.now(), active: true, ...payload }
     categoriesStore = [...categoriesStore, newCat]
     return mockDelay(newCat)
   }
-  return api.post('/config/categories', payload)
+  return api.post('/categories', payload)
 }
 
-/** PATCH /config/categories/:id { active } */
+/** PUT /categories/:id { active } */
 export async function toggleCategory(id, active) {
   if (USE_MOCKS) {
     categoriesStore = categoriesStore.map((c) => (c.id === id ? { ...c, active } : c))
     return mockDelay({ success: true })
   }
-  return api.patch(`/config/categories/${id}`, { active })
+  return api.put(`/categories/${id}`, { active })
 }
 
 /** GET /locations -> Location[] */

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createTicket } from '../../api/tickets'
 import { getCategories, getLocations } from '../../api/config'
+import { USE_MOCKS } from '../../api/client'
 import { ErrorBanner } from '../../components/UI'
 import EmergencyBanner from '../../components/EmergencyBanner'
 import { containsEmergencyKeyword } from '../../utils/emergencyDetection'
@@ -99,14 +100,18 @@ export default function CreateTicket() {
       impact: form.impact,
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (!clean.title || !clean.description || !clean.location || !clean.impact) {
 =======
        if (!clean.title || !clean.description || !clean.location) {
 >>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
+=======
+    if (!clean.title || !clean.description || !clean.location) {
+>>>>>>> 3cd98ae (HLP-FR-02, Sprint 1, Frontend: Update)
       setError('Title و Description و Building/room مطلوبين ومينفعش يكونوا مسافات بس.')
       return
     }
-    if (clean.asset && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean.asset)) {
+    if (!USE_MOCKS && clean.asset && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean.asset)) {
       setError('Asset ID لازم يكون UUID صحيح. سيبه فاضي لحد ما الباك يضيف endpoint للأجهزة.')
       return
     }
@@ -118,7 +123,8 @@ export default function CreateTicket() {
       showToast(`تم إنشاء التذكرة ${ticket.reference || ticket.id} بنجاح ✅`)
       navigate(`/ticket/${ticket.id}`)
     } catch (err) {
-      setError(err.message)
+      const msg = err?.data?.message || err?.message || 'Failed to create ticket'
+      setError(msg)
     } finally {
       setSubmitting(false)
     }

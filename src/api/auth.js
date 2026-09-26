@@ -64,8 +64,15 @@ export async function register({ name, email, password, role }) {
     usersMock.push({ id: Date.now(), name, email: normalizedEmail, password, role, status: 'active' })
     return mockDelay({ status: 'active', user: { name, email: normalizedEmail, role } })
   }
-  // الـ role بيتبعت بس لو اتحدد صراحة — غير كده الـ backend هو اللي يقرر الافتراضي
-  return api.post('/auth/register', { full_name: name, email: email.trim().toLowerCase(), password, ...(role ? { role } : {}) })
+  // السيرفر يقبل role كـ enum Uppercase مثل REPORTER / TECHNICIAN / MANAGER
+  const normalizedRole = role ? String(role).trim().toUpperCase() : undefined
+
+  return api.post('/auth/register', {
+    full_name: name,
+    email: email.trim().toLowerCase(),
+    password,
+    ...(normalizedRole ? { role: normalizedRole } : {}),
+  })
 }
 
 /**

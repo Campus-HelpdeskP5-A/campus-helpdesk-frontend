@@ -34,10 +34,10 @@ export async function approveAccount(id) {
     }
     return mockDelay({ success: true })
   }
-  return api.post(`/users/${id}/approve`)
+  return api.patch(`/users/${id}/approve`)
 }
 
-/** POST /users/:id/reject */
+/** PATCH /users/:id/reject */
 export async function rejectAccount(id) {
   if (USE_MOCKS) {
     const idx = pendingStore.findIndex((u) => u.id === id)
@@ -49,7 +49,7 @@ export async function rejectAccount(id) {
     }
     return mockDelay({ success: true })
   }
-  return api.post(`/users/${id}/reject`)
+  return api.patch(`/users/${id}/reject`)
 }
 
 /** يستخدمها auth.js وقت الـ register لحساب Technician/Manager جديد */
