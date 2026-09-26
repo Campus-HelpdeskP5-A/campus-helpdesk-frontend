@@ -164,6 +164,78 @@ export async function getTickets(filters = {}) {
   return USE_MOCKS ? mockDelay(list) : list
 }
 
+/** GET /status-history/ticket/:ticketId -> timeline items { label, at, by } */
+export async function getTicketHistory(ticketId) {
+  if (USE_MOCKS) {
+    const found = mockStore.find((t) => t.id === ticketId)
+    return mockDelay(found?.timeline || [])
+  }
+
+  const list = asList(await api.get(`/status-history/ticket/${ticketId}`))
+  return list.map((h) => ({
+    ...h,
+    id: h.status_history_id ?? h.id,
+    label: [h.old_status, h.new_status].filter(Boolean).join(' → ') || 'Status updated',
+    at: h.changed_at ? new Date(h.changed_at).toLocaleString() : '',
+    by: h.changed_by_name || '',
+    reason: h.reason || '',
+  }))
+}
+
+/** GET /attachments/ticket/:ticketId -> [{ name, size, type }] */
+export async function getTicketAttachments(ticketId) {
+  if (USE_MOCKS) return mockDelay([])
+  const list = asList(await api.get(`/attachments/ticket/${ticketId}`))
+  return list.map((a) => ({
+    ...a,
+    id: a.attachment_id ?? a.id,
+    name: a.file_name ?? a.name ?? 'Attachment',
+    size: a.file_size ?? a.size ?? 0,
+    type: a.mime_type ?? a.type ?? '',
+  }))
+}
+
+/**
+ * GET /predictions/ticket/:ticketId -> AI suggestion
+ * { category, categoryConfidence, priority, priorityConfidence } | null
+ */
+export async function getTicketPredictions(ticketId) {
+  if (USE_MOCKS) return mockDelay(null)
+  let list = []
+  try {
+    list = asList(await api.get(`/predictions/ticket/${ticketId}`))
+  } catch {
+    return null
+  }
+  if (!list.length) return null
+
+  const pick = (type) =>
+    list.find((p) => String(p.prediction_type || '').toUpperCase() === type)
+  const cat = pick('CATEGORY')
+  const pri = pick('PRIORITY')
+  if (!cat && !pri) return null
+
+  const pct = (c) =>
+    c?.confidence === undefined || c?.confidence === null
+      ? null
+      : Math.round(Number(c.confidence) * 100)
+  return {
+    category: cat?.predicted_value ?? null,
+    categoryConfidence: pct(cat),
+    priority: pri ? String(pri.predicted_value).toLowerCase() : null,
+    priorityConfidence: pct(pri),
+  }
+}
+
+/**
+ * POST /escalations { ticket_id, trigger_type, severity, reason?, assigned_to?, assigned_team_id? }
+ * Note: backend requires assigned_to OR assigned_team_id.
+ */
+export async function createEscalation(payload) {
+  if (USE_MOCKS) return mockDelay({ success: true })
+  return api.post('/escalations', payload)
+}
+
 /** GET /tickets/:id  -> ticket | null لو مش موجودة */
 export async function getTicketById(id) {
   if (USE_MOCKS) {

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getTickets } from '../../api/tickets'
 import { Tag, LoadingState, EmptyState } from '../../components/UI'
 
-const STATUS_LABEL = { open: 'Open', progress: 'In progress', done: 'Resolved' }
+const STATUS_LABEL = { open: 'Open', progress: 'In progress', pending: 'Waiting', done: 'Resolved' }
 
 export default function AllTickets() {
   const [tickets, setTickets] = useState(null)
@@ -28,6 +28,7 @@ export default function AllTickets() {
           <option value="">Status</option>
           <option value="open">Open</option>
           <option value="progress">In progress</option>
+          <option value="pending">Waiting</option>
           <option value="done">Resolved</option>
         </select>
       </div>

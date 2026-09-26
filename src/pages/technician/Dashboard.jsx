@@ -103,6 +103,7 @@ export default function TechnicianDashboard() {
 
         <button
           type="button"
+          className="btn ghost sm"
           onClick={() => setFilters(initialFilters)}
           style={{ marginTop: 12 }}
         >

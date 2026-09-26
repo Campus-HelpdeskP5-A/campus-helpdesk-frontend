@@ -1,13 +1,37 @@
 import { useEffect, useState } from 'react'
-import { getTechniciansWorkload } from '../../api/users'
-import { LoadingState, Tag } from '../../components/UI'
+import { getTechniciansWorkload, assignTechnician } from '../../api/users'
+import { getTickets } from '../../api/tickets'
+import { LoadingState, EmptyState, Tag } from '../../components/UI'
+import { useToast } from '../../context/ToastContext'
 
 export default function Workload() {
+  const { showToast } = useToast()
   const [techs, setTechs] = useState(null)
+  const [tickets, setTickets] = useState([])
+  const [selectedTicket, setSelectedTicket] = useState('')
+  const [assigningId, setAssigningId] = useState(null)
 
   useEffect(() => {
-    getTechniciansWorkload().then(setTechs)
+    getTechniciansWorkload().then(setTechs).catch(() => setTechs([]))
+    getTickets({ status: 'open' }).then(setTickets).catch(() => setTickets([]))
   }, [])
+
+  async function handleAssign(techId, techName) {
+    if (!selectedTicket) {
+      showToast('اختار تذكرة من القائمة الأول عشان تعيّنها.')
+      return
+    }
+    setAssigningId(techId)
+    try {
+      await assignTechnician(selectedTicket, techId)
+      showToast(`تم تعيين التذكرة لـ ${techName} ✅`)
+      setTechs(await getTechniciansWorkload().catch(() => techs))
+    } catch (err) {
+      showToast(err?.data?.message || err.message || 'Failed to assign ticket.')
+    } finally {
+      setAssigningId(null)
+    }
+  }
 
   if (!techs) return <LoadingState />
 
@@ -16,23 +40,46 @@ export default function Workload() {
   return (
     <div>
       <h2 style={{ marginBottom: 18 }}>Workload & assignment</h2>
-      <table className="mini">
-        <thead>
-          <tr><th>Technician</th><th>Active</th><th>Capacity</th><th>Status</th><th>Urgent</th><th></th></tr>
-        </thead>
-        <tbody>
-          {techs.map((t) => (
-            <tr key={t.id}>
-              <td>{t.name} {t.id === suggestedId && <span style={{ color: 'var(--success)', fontSize: 11 }}>★ suggested</span>}</td>
-              <td>{t.active}</td>
-              <td>{t.capacity}</td>
-              <td><Tag variant={t.status === 'available' ? 'done' : 'progress'}>{t.status === 'available' ? 'Available' : 'Busy'}</Tag></td>
-              <td>{t.urgent}</td>
-              <td><button className={`btn sm${t.id === suggestedId ? ' primary' : ''}`}>{t.id === suggestedId ? 'Assign' : 'Reassign'}</button></td>
-            </tr>
+      <div className="field" style={{ maxWidth: 480 }}>
+        <label>Ticket to assign (open tickets)</label>
+        <select value={selectedTicket} onChange={(e) => setSelectedTicket(e.target.value)}>
+          <option value="">Select a ticket…</option>
+          {tickets.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.reference} — {t.title || t.category || 'Ticket'}
+            </option>
           ))}
-        </tbody>
-      </table>
+        </select>
+      </div>
+      {techs.length === 0 ? (
+        <EmptyState>مفيش فنيين متاحين حالياً.</EmptyState>
+      ) : (
+        <table className="mini">
+          <thead>
+            <tr><th>Technician</th><th>Active</th><th>Capacity</th><th>Status</th><th>Urgent</th><th></th></tr>
+          </thead>
+          <tbody>
+            {techs.map((t) => (
+              <tr key={t.id}>
+                <td>{t.name} {t.id === suggestedId && <span style={{ color: 'var(--success)', fontSize: 11 }}>★ suggested</span>}</td>
+                <td>{t.active}</td>
+                <td>{t.capacity}</td>
+                <td><Tag variant={t.status === 'available' ? 'done' : 'progress'}>{t.status === 'available' ? 'Available' : 'Busy'}</Tag></td>
+                <td>{t.urgent}</td>
+                <td>
+                  <button
+                    className={`btn sm${t.id === suggestedId ? ' primary' : ''}`}
+                    disabled={assigningId === t.id}
+                    onClick={() => handleAssign(t.id, t.name)}
+                  >
+                    {assigningId === t.id ? '…' : t.id === suggestedId ? 'Assign' : 'Reassign'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }

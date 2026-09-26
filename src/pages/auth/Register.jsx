@@ -20,8 +20,10 @@ export default function Register() {
     e.preventDefault()
     try {
       const res = await register({ ...form, name: form.name.trim() })
+      // Backend activates accounts immediately; only go to pending-approval
+      // when the server actually reports a pending status.
       const st = res?.status || res?.data?.status || res?.user?.status || res?.data?.user?.status
-      if (form.role !== 'reporter' || isPendingStatus(st)) {
+      if (isPendingStatus(st)) {
         navigate('/pending-approval', { state: { role: form.role } })
       } else {
         showToast('تم إنشاء الحساب بنجاح ✅ سجّل دخولك دلوقتي.')

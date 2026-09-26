@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getTicketById, updateTicketStatus, addComment, getTicketComments, confirmResolution, reopenTicket } from '../../api/tickets'
+import { getTicketById, updateTicketStatus, addComment, getTicketComments, getTicketHistory, getTicketAttachments, confirmResolution, reopenTicket } from '../../api/tickets'
 import { createFeedback, getTicketFeedback } from '../../api/feedback'
 import { Tag, LoadingState, EmptyState, Card } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
@@ -14,6 +14,8 @@ export default function TicketDetails() {
   // undefined = لسه بيحمّل، null = التذكرة مش موجودة
   const [ticket, setTicket] = useState(undefined)
   const [comments, setComments] = useState([])
+  const [timeline, setTimeline] = useState([])
+  const [attachments, setAttachments] = useState([])
   const [comment, setComment] = useState('')
   const [feedback, setFeedback] = useState([])
   const [rating, setRating] = useState('5')
@@ -22,8 +24,22 @@ export default function TicketDetails() {
   useEffect(() => {
     let cancelled = false
     setTicket(undefined)
-    Promise.all([getTicketById(id), getTicketFeedback(id), getTicketComments(id).catch(() => [])])
-      .then(([t, f, c]) => { if (!cancelled) { setTicket(t); setFeedback(f); setComments(c || []) } })
+    Promise.all([
+      getTicketById(id),
+      getTicketFeedback(id),
+      getTicketComments(id).catch(() => []),
+      getTicketHistory(id).catch(() => []),
+      getTicketAttachments(id).catch(() => []),
+    ])
+      .then(([t, f, c, h, a]) => {
+        if (!cancelled) {
+          setTicket(t)
+          setFeedback(f)
+          setComments(c || [])
+          setTimeline(h || [])
+          setAttachments(a || [])
+        }
+      })
       .catch(() => { if (!cancelled) setTicket(null) })
     return () => { cancelled = true }
   }, [id])
@@ -104,14 +120,29 @@ export default function TicketDetails() {
           </Card>
           <Card title="Timeline">
             <div className="row-list">
-              {(ticket.timeline || []).map((t, i) => (
-                <div className="item" key={i}>
-                  <span>{t.label}</span>
+              {(timeline.length > 0 ? timeline : (ticket.timeline || [])).map((t, i) => (
+                <div className="item" key={t.id || i}>
+                  <span>{t.label}{t.by ? ` — ${t.by}` : ''}{t.reason ? ` (${t.reason})` : ''}</span>
                   <span style={{ color: 'var(--text-muted)' }}>{t.at}</span>
                 </div>
               ))}
+              {timeline.length === 0 && (ticket.timeline || []).length === 0 && (
+                <div className="item"><span style={{ color: 'var(--text-muted)' }}>No history yet.</span></div>
+              )}
             </div>
           </Card>
+          {attachments.length > 0 && (
+            <Card title="Attachments">
+              <div className="row-list">
+                {attachments.map((a) => (
+                  <div className="item" key={a.id}>
+                    <span>📎 {a.name}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{a.size ? `${Math.round(a.size / 1024)} KB` : ''}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
         <div>
           <Card title="Comments">
