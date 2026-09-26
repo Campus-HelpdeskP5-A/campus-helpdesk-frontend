@@ -32,26 +32,31 @@ export async function getCategories() {
     ...c,
     id: c.id ?? c.category_id,
     name: c.name ?? c.category_name,
+    active: c.active ?? c.is_active ?? true,
   }))
 }
 
-/** POST /categories { name, team } -> Category */
+/** POST /categories { category_name, description?, default_team_id? } */
 export async function addCategory(payload) {
   if (USE_MOCKS) {
     const newCat = { id: Date.now(), active: true, ...payload }
     categoriesStore = [...categoriesStore, newCat]
     return mockDelay(newCat)
   }
-  return api.post('/categories', payload)
+  return api.post('/categories', {
+    category_name: payload.name ?? payload.category_name,
+    ...(payload.description ? { description: payload.description } : {}),
+    ...(payload.default_team_id ? { default_team_id: payload.default_team_id } : {}),
+  })
 }
 
-/** PUT /categories/:id { active } */
+/** PUT /categories/:id { is_active } */
 export async function toggleCategory(id, active) {
   if (USE_MOCKS) {
     categoriesStore = categoriesStore.map((c) => (c.id === id ? { ...c, active } : c))
     return mockDelay({ success: true })
   }
-  return api.put(`/categories/${id}`, { active })
+  return api.put(`/categories/${id}`, { is_active: !!active })
 }
 
 /** GET /locations -> Location[] */

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getTicketById, updateTicketStatus, addComment, confirmResolution, reopenTicket } from '../../api/tickets'
+import { getTicketById, updateTicketStatus, addComment, getTicketComments, confirmResolution, reopenTicket } from '../../api/tickets'
 import { createFeedback, getTicketFeedback } from '../../api/feedback'
 import { Tag, LoadingState, EmptyState, Card } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
@@ -13,6 +13,7 @@ export default function TicketDetails() {
   const { user } = useAuth()
   // undefined = لسه بيحمّل، null = التذكرة مش موجودة
   const [ticket, setTicket] = useState(undefined)
+  const [comments, setComments] = useState([])
   const [comment, setComment] = useState('')
   const [feedback, setFeedback] = useState([])
   const [rating, setRating] = useState('5')
@@ -21,8 +22,8 @@ export default function TicketDetails() {
   useEffect(() => {
     let cancelled = false
     setTicket(undefined)
-    Promise.all([getTicketById(id), getTicketFeedback(id)])
-      .then(([t, f]) => { if (!cancelled) { setTicket(t); setFeedback(f) } })
+    Promise.all([getTicketById(id), getTicketFeedback(id), getTicketComments(id).catch(() => [])])
+      .then(([t, f, c]) => { if (!cancelled) { setTicket(t); setFeedback(f); setComments(c || []) } })
       .catch(() => { if (!cancelled) setTicket(null) })
     return () => { cancelled = true }
   }, [id])
@@ -66,8 +67,12 @@ export default function TicketDetails() {
 
   async function handleAddComment() {
     if (!comment.trim()) return
-    const updated = await addComment(id, comment)
-    setTicket(updated)
+    const created = await addComment(id, comment)
+    if (created && (created.id || created.comment_id || created.text)) {
+      setComments((l) => [...l, created])
+    } else {
+      setComments(await getTicketComments(id).catch(() => []))
+    }
     setComment('')
   }
 
@@ -110,9 +115,9 @@ export default function TicketDetails() {
         </div>
         <div>
           <Card title="Comments">
-            {(ticket.comments || []).map((c, i) => (
-              <p key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
-                <b>{c.author}:</b> {c.text}
+            {(comments.length > 0 ? comments : (ticket.comments || [])).map((c, i) => (
+              <p key={c.id || c.comment_id || i} style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
+                <b>{c.author || c.user_name || 'User'}:</b> {c.text || c.body || ''}
               </p>
             ))}
             <div style={{ display: 'flex', gap: 6 }}>

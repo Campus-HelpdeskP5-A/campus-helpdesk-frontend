@@ -9,10 +9,11 @@ export async function getNotifications() {
 
   return asList(await api.get('/notifications')).map((n) => ({
     ...n,
-    id: n.notification_id,
-    text: n.message,
-    read: n.is_read,
-    time: n.created_at,
+    id: n.notification_id ?? n.id,
+    title: n.title ?? '',
+    text: n.title ? `${n.title}: ${n.body ?? n.message ?? ''}` : (n.body ?? n.message ?? n.text ?? ''),
+    read: n.is_read ?? n.read,
+    time: n.created_at ?? n.time,
   }))
 }
 

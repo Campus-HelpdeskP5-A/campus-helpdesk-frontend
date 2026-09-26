@@ -16,10 +16,18 @@ export function normalizeUser(u) {
 // مرجع مباشر (مش نسخة) عشان register() في auth.js يقدر يضيف عليه
 let pendingStore = pendingAccountsMock
 
-/** GET /users/pending -> pending account requests */
+/** GET /users/pending -> pending account requests (normalized for the UI) */
 export async function getPendingAccounts() {
   if (USE_MOCKS) return mockDelay([...pendingStore])
-  return asList(await api.get('/users/pending'))
+  const list = asList(await api.get('/users/pending'))
+  return list.map((u) => ({
+    ...u,
+    id: u.user_id ?? u.id,
+    name: u.full_name ?? u.name ?? '',
+    email: u.email ?? '',
+    requestedRole: u.requested_role ?? u.role ?? '',
+    requestedAt: u.created_at ?? u.requestedAt ?? '',
+  }))
 }
 
 /** POST /users/:id/approve */
@@ -37,7 +45,7 @@ export async function approveAccount(id) {
   return api.patch(`/users/${id}/approve`)
 }
 
-/** PATCH /users/:id/reject */
+/** Reject -> backend has no /reject route; deactivate via PATCH /users/:id/status */
 export async function rejectAccount(id) {
   if (USE_MOCKS) {
     const idx = pendingStore.findIndex((u) => u.id === id)
@@ -49,7 +57,7 @@ export async function rejectAccount(id) {
     }
     return mockDelay({ success: true })
   }
-  return api.patch(`/users/${id}/reject`)
+  return api.patch(`/users/${id}/status`, { is_active: false })
 }
 
 /** يستخدمها auth.js وقت الـ register لحساب Technician/Manager جديد */
@@ -66,7 +74,7 @@ export async function getAllUsers() {
   return asList(await api.get('/users')).map(normalizeUser)
 }
 
-/** PATCH /users/:id/role { role } -> المدير بيغيّر دور مستخدم (Reporter -> Technician/Manager..) */
+/** PUT /users/:id { role } -> المدير بيغيّر دور مستخدم (Reporter -> Technician/Manager..) */
 export async function updateUserRole(id, role) {
   if (USE_MOCKS) {
     const idx = usersMock.findIndex((u) => u.id === id)
@@ -75,10 +83,10 @@ export async function updateUserRole(id, role) {
     }
     return mockDelay({ success: true })
   }
-  return api.patch(`/users/${id}/role`, { role })
+  return api.put(`/users/${id}`, { role: String(role).toUpperCase() })
 }
 
-/** DELETE /users/:id -> المدير بيحذف مستخدم نهائياً */
+/** Deactivate -> backend has no DELETE /users/:id; deactivate via PATCH /users/:id/status */
 export async function deleteUser(id) {
   if (USE_MOCKS) {
     const idx = usersMock.findIndex((u) => u.id === id)
@@ -86,17 +94,30 @@ export async function deleteUser(id) {
     usersMock.splice(idx, 1)
     return mockDelay({ success: true })
   }
-  return api.delete(`/users/${id}`)
+  return api.patch(`/users/${id}/status`, { is_active: false })
 }
 
 /** GET /users/technicians -> technicians with current workload, for assignment */
 export async function getTechniciansWorkload() {
   if (USE_MOCKS) return mockDelay(techniciansMock)
-  return asList(await api.get('/users/technicians'))
+  const list = asList(await api.get('/users/technicians'))
+  // Backend returns { user_id, full_name, workload }; UI expects { id, name, active, capacity, status, urgent }
+  return list.map((u) => {
+    const active = Number(u.workload ?? u.active ?? 0) || 0
+    return {
+      ...u,
+      id: u.user_id ?? u.id,
+      name: u.full_name ?? u.name ?? '',
+      active,
+      capacity: 8,
+      status: active >= 6 ? 'busy' : 'available',
+      urgent: 0,
+    }
+  })
 }
 
-/** POST /tickets/:ticketId/assign { technicianId } */
+/** POST /assignments { ticket_id, assigned_to } */
 export async function assignTechnician(ticketId, technicianId) {
   if (USE_MOCKS) return mockDelay({ success: true })
-  return api.post(`/tickets/${ticketId}/assign`, { technicianId })
+  return api.post('/assignments', { ticket_id: ticketId, assigned_to: technicianId })
 }

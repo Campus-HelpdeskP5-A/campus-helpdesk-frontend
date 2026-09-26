@@ -38,7 +38,7 @@ export default function CreateTicket() {
   useEffect(() => {
     Promise.all([getCategories(), getLocations()])
       .then(([categoryList, locationList]) => {
-        setCategories((categoryList || []).filter((c) => c.active !== false))
+        setCategories((categoryList || []).filter((c) => (c.active ?? c.is_active ?? true) !== false))
         setLocations(locationList || [])
       })
       .catch(() => setError('تعذر تحميل بيانات الفئات والمواقع. حدّث الصفحة وحاول تاني.'))
@@ -84,23 +84,26 @@ export default function CreateTicket() {
       asset: form.asset.trim(),
       impact: form.impact,
     }
-    if (!clean.title || !clean.description || !clean.location) {
-      setError('Title و Description و Building/room مطلوبين ومينفعش يكونوا مسافات بس.')
+    if (!clean.title || !clean.description || !clean.location || !clean.category) {
+      setError('Title و Description و Category و Building/room مطلوبين ومينفعش يكونوا مسافات بس.')
       return
     }
-    if (!USE_MOCKS && clean.asset && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean.asset)) {
-      setError('Asset ID لازم يكون UUID صحيح. سيبه فاضي لحد ما الباك يضيف endpoint للأجهزة.')
-      return
-    }
+    // Backend accepts an asset UUID or an asset tag; unknown tags only raise a warning.
     setSubmitting(true)
     try {
       const cat = categories.find((c) => String(c.id) === String(clean.category))
       const payload = { ...clean, categoryName: cat?.name, file: attachment }
       const ticket = await createTicket(payload, user?.name)
-      showToast(`تم إنشاء التذكرة ${ticket.reference || ticket.id} بنجاح ✅`)
-      navigate(`/ticket/${ticket.id}`)
+      const warning = ticket?.asset_warning
+      showToast(`تم إنشاء التذكرة ${ticket.reference || ticket.id} بنجاح ✅${warning ? ` (ملحوظة: ${warning})` : ''}`)
+      navigate(`/ticket/${ticket.ticket_id || ticket.id}`)
     } catch (err) {
-      const msg = err?.data?.message || err?.message || 'Failed to create ticket'
+      const data = err?.data
+      const msg =
+        data?.message ||
+        (data?.allowed_values ? `${data.message || 'Invalid value'} (Allowed: ${data.allowed_values.join(', ')})` : null) ||
+        err?.message ||
+        'Failed to create ticket'
       setError(msg)
     } finally {
       setSubmitting(false)

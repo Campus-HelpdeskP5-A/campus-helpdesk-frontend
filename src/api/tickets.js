@@ -11,17 +11,19 @@ let mockStore = [...ticketsMock]
 // ---------------------------------------------------------------------------
 const STATUS_FROM_API = {
   OPEN: 'open',
-  IN_PROGRESS: 'progress',
-  WAITING: 'pending',
-  RESOLVED: 'done',
-  CLOSED: 'done',
   NEW: 'open',
   TRIAGED: 'open',
   ASSIGNED: 'open',
   REOPENED: 'open',
+  IN_PROGRESS: 'progress',
   WAITING: 'pending',
+  RESOLVED: 'done',
+  CLOSED: 'done',
 }
-const STATUS_TO_API = { open: 'OPEN', progress: 'IN_PROGRESS', pending: 'WAITING', done: 'RESOLVED' }
+// UI group -> backend canonical status (backend has no OPEN value)
+const STATUS_TO_API = { open: 'NEW', progress: 'IN_PROGRESS', pending: 'WAITING', done: 'RESOLVED' }
+// UI group values are filtered client-side after fetch
+const UI_GROUP_STATUS = new Set(['open', 'progress', 'pending', 'done'])
 
 function normalizeStatus(status) {
   if (!status) return 'open'
@@ -42,6 +44,11 @@ function toApiStatus(status) {
 export function normalizeTicket(raw) {
   if (!raw) return null
   const id = raw.id ?? raw.ticket_id
+  const locationText =
+    raw.location ??
+    raw.location_label ??
+    [raw.building, raw.floor, raw.room_code].filter(Boolean).join(' — ') ??
+    ''
   return {
     ...raw,
     id,
@@ -49,10 +56,17 @@ export function normalizeTicket(raw) {
     reference: raw.reference_number ?? raw.reference ?? id,
     title: raw.title ?? raw.subject ?? '',
     category: raw.category ?? raw.category_name ?? '',
+    category_id: raw.category_id ?? raw.category,
+    location: locationText,
+    location_id: raw.location_id ?? raw.location,
     status: normalizeStatus(raw.status),
     priority: normalizePriority(raw.priority),
     reporter:
-      raw.reporter && typeof raw.reporter === 'object' ? raw.reporter.name : raw.reporter,
+      raw.reporter && typeof raw.reporter === 'object'
+        ? raw.reporter.name
+        : raw.reporter ?? raw.reporter_name ?? raw.reporter_email ?? '',
+    team: raw.team ?? raw.team_name ?? raw.assigned_team ?? '',
+    technician: raw.technician ?? raw.assignee_name ?? null,
     createdAt: raw.createdAt ?? raw.created_at,
     timeline: Array.isArray(raw.timeline) ? raw.timeline : [],
     comments: Array.isArray(raw.comments) ? raw.comments : [],
@@ -107,7 +121,9 @@ export async function getTickets(filters = {}) {
   } else {
     const params = new URLSearchParams()
 
-    if (filters.status) {
+    // Backend only accepts canonical statuses (NEW, IN_PROGRESS, ...).
+    // UI group values (open/progress/pending/done) are filtered client-side below.
+    if (filters.status && !UI_GROUP_STATUS.has(String(filters.status).toLowerCase())) {
       params.set('status', toApiStatus(filters.status))
     }
 
@@ -133,6 +149,12 @@ export async function getTickets(filters = {}) {
 
   list = list.map(normalizeTicket)
   if (paginationTotal !== null) list.total = paginationTotal
+
+  // UI group status filter (open = NEW/TRIAGED/ASSIGNED/REOPENED, ...)
+  if (filters.status && UI_GROUP_STATUS.has(String(filters.status).toLowerCase())) {
+    const wanted = normalizeStatus(filters.status)
+    list = list.filter((t) => t.status === wanted)
+  }
 
   // البحث النصي بيتعمل هنا في الحالتين (الـ mock والـ backend)
   if (filters.q) {
@@ -194,6 +216,22 @@ export async function createTicket(payload, reporterName) {
   const normalizedUrgency = URGENCY_TO_API[urgency] || String(urgency || '').toUpperCase()
   const normalizedImpact = URGENCY_TO_API[impact] || String(impact || '').toUpperCase()
 
+  // Backend (POST /tickets) expects attachment metadata inside the same call
+  // via `attachments: [{ file_uuid, file_name, mime_type, file_size, storage_path }]`.
+  // There is no real file-storage service on the frontend, so the file name
+  // is used as storage_path and a fresh UUID as file_uuid.
+  const attachments = file
+    ? [
+        {
+          file_uuid: crypto.randomUUID(),
+          file_name: file.name,
+          mime_type: file.type || 'application/octet-stream',
+          file_size: file.size,
+          storage_path: file.name,
+        },
+      ]
+    : []
+
   const body = {
     ...(title ? { title: String(title).trim() } : {}),
     ...(description ? { description: String(description).trim() } : {}),
@@ -201,23 +239,12 @@ export async function createTicket(payload, reporterName) {
     ...(location ? { location_id: String(location) } : {}),
     ...(normalizedUrgency ? { urgency: normalizedUrgency } : {}),
     ...(normalizedImpact ? { impact: normalizedImpact } : {}),
-    ...(asset ? { asset_id: String(asset).trim() } : {}),
+    // Backend accepts a UUID or an asset tag; unknown tags only raise a warning
+    ...(asset && String(asset).trim() ? { asset_id: String(asset).trim() } : {}),
+    ...(attachments.length ? { attachments } : {}),
   }
 
   const created = normalizeTicket(unwrap(await api.post('/tickets', body)))
-
-  // Attachments are stored through the dedicated attachment endpoint.
-  // The ticket API intentionally remains JSON-based.
-  if (file) {
-    await api.post('/attachments', {
-      ticket_id: created.id,
-      file_uuid: crypto.randomUUID(),
-      file_name: file.name,
-      mime_type: file.type || 'application/octet-stream',
-      file_size: file.size,
-      storage_path: file.name,
-    })
-  }
 
   return created
 }
@@ -249,7 +276,7 @@ export async function updateTicketStatus(id, status) {
   return normalizeTicket(unwrap(result))
 }
 
-/** POST /tickets/:id/triage */
+/** PATCH /tickets/:id/triage { category_id, priority } — agent only */
 export async function triageTicket(id, payload) {
   if (USE_MOCKS) {
     mockStore = mockStore.map((t) =>
@@ -259,16 +286,36 @@ export async function triageTicket(id, payload) {
     return mockDelay(normalizeTicket(mockStore.find((t) => t.id === id)))
   }
 
-  const result = await api.post(`/tickets/${id}/triage`, {
-    ...payload,
-    status: toApiStatus(payload.status),
-    priority: payload.priority ? String(payload.priority).toUpperCase() : payload.priority,
-  })
+  const body = {}
+  if (payload.category || payload.category_id) {
+    body.category_id = String(payload.category ?? payload.category_id)
+  }
+  if (payload.priority) {
+    body.priority = String(payload.priority).toUpperCase()
+  }
+
+  const result = await api.patch(`/tickets/${id}/triage`, body)
 
   return normalizeTicket(unwrap(result))
 }
 
-/** POST /tickets/:id/comments */
+/** GET /comments/ticket/:ticketId -> Comment[] (normalized for the UI) */
+export async function getTicketComments(ticketId) {
+  if (USE_MOCKS) {
+    const found = mockStore.find((t) => t.id === ticketId)
+    return mockDelay(found?.comments || [])
+  }
+
+  const list = asList(await api.get(`/comments/ticket/${ticketId}`))
+  return list.map((c) => ({
+    ...c,
+    id: c.comment_id ?? c.id,
+    author: c.user_name ?? c.author ?? 'User',
+    text: c.body ?? c.text ?? '',
+  }))
+}
+
+/** POST /comments { ticket_id, body, is_internal } -> created comment */
 export async function addComment(id, text) {
   if (USE_MOCKS) {
     mockStore = mockStore.map((t) =>
@@ -286,12 +333,21 @@ export async function addComment(id, text) {
     return mockDelay(normalizeTicket(mockStore.find((t) => t.id === id)))
   }
 
-  const result = await api.post(`/tickets/${id}/comments`, { text })
-
-  return normalizeTicket(unwrap(result))
+  const result = await api.post('/comments', {
+    ticket_id: id,
+    body: String(text).trim(),
+    is_internal: false,
+  })
+  const c = unwrap(result)
+  return {
+    ...c,
+    id: c?.comment_id ?? c?.id,
+    author: c?.user_name ?? 'You',
+    text: c?.body ?? String(text),
+  }
 }
 
-/** POST /tickets/:id/work-log */
+/** POST /work-logs { ticket_id, time_spent_minutes, note?, started_at?, ended_at? } */
 export async function submitWorkLog(id, payload) {
   if (USE_MOCKS) {
     mockStore = mockStore.map((t) =>
@@ -307,17 +363,33 @@ export async function submitWorkLog(id, payload) {
     return mockDelay(normalizeTicket(mockStore.find((t) => t.id === id)))
   }
 
-  const result = await api.post(`/tickets/${id}/work-log`, payload)
+  const minutes = Number.parseInt(String(payload.timeSpent ?? payload.time_spent_minutes ?? ''), 10)
+  const note = [
+    payload.diagnosis && `Diagnosis: ${payload.diagnosis}`,
+    payload.actions && `Actions: ${payload.actions}`,
+    payload.parts && `Parts: ${payload.parts}`,
+    payload.resolutionCode && `Resolution: ${payload.resolutionCode}`,
+    payload.internalNote && `Internal: ${payload.internalNote}`,
+    payload.reporterComment && `Reporter: ${payload.reporterComment}`,
+    payload.note,
+  ]
+    .filter(Boolean)
+    .join('\n')
 
-  return normalizeTicket(unwrap(result))
+  const result = await api.post('/work-logs', {
+    ticket_id: id,
+    time_spent_minutes: Number.isFinite(minutes) && minutes >= 0 ? minutes : 0,
+    ...(note ? { note } : {}),
+  })
+
+  return unwrap(result)
 }
 
 /**
- * Dashboard KPI data
- *
- * Reporter -> /tickets
- * Agent -> /dashboard/team
- * Manager -> /dashboard
+ * Dashboard KPI data — aligned with backend v2 routes:
+ * Reporter -> GET /dashboard/reporter { tickets: { total,new,triaged,assigned,in_progress,waiting,resolved,reopened,closed } }
+ * Agent/Technician -> GET /dashboard/team { tickets, sla, escalations }
+ * Manager -> GET /dashboard { tickets, sla }
  */
 export async function getKpiSummary(role) {
   if (USE_MOCKS) {
@@ -327,24 +399,19 @@ export async function getKpiSummary(role) {
   const normalizedRole = role.toUpperCase()
 
   if (normalizedRole === 'REPORTER') {
-    const result = await api.get('/tickets')
-    const tickets = asList(result).map(normalizeTicket)
+    const result = await api.get('/dashboard/reporter')
+    const t = result?.data?.tickets || {}
 
+    const num = (v) => Number(v) || 0
     return {
-      total: tickets.length,
-      open: tickets.filter((t) => t.status === 'open').length,
-      progress: tickets.filter(
-        (t) => t.status === 'progress'
-      ).length,
-      resolved: tickets.filter(
-        (t) =>
-          t.status === 'done' ||
-          t.status === 'done'
-      ).length,
+      total: num(t.total),
+      open: num(t.new) + num(t.triaged) + num(t.assigned) + num(t.reopened),
+      progress: num(t.in_progress),
+      resolved: num(t.resolved) + num(t.closed),
     }
   }
 
-  if (normalizedRole === 'AGENT') {
+  if (normalizedRole === 'AGENT' || normalizedRole === 'TECHNICIAN') {
     const result = await api.get('/dashboard/team')
     const data = result?.data || {}
 
@@ -353,11 +420,15 @@ export async function getKpiSummary(role) {
     const escalations = data.escalations || {}
 
     return {
-      new: tickets.open || 0,
-      slaRisk: sla.response_sla_breached || 0,
+      new: Number(tickets.new) || 0,
+      slaRisk:
+        (Number(sla.response_sla_at_risk) || 0) +
+        (Number(sla.resolution_sla_at_risk) || 0),
       urgent: 0,
-      overdue: sla.resolution_sla_breached || 0,
-      escalations: escalations.active || 0,
+      overdue:
+        (Number(sla.response_sla_breached) || 0) +
+        (Number(sla.resolution_sla_breached) || 0),
+      escalations: Number(escalations.active) || 0,
     }
   }
 
@@ -368,14 +439,15 @@ export async function getKpiSummary(role) {
     const tickets = data.tickets || {}
     const sla = data.sla || {}
 
-    const total = tickets.total || 0
-    const withinSla = sla.within_sla || 0
+    const num = (v) => Number(v) || 0
+    const total = num(tickets.total)
+    const withinSla = num(sla.within_sla)
 
     return {
       total,
-      open: tickets.open || 0,
-      slaRisk: sla.response_sla_breached || 0,
-      slaBreached: sla.resolution_sla_breached || 0,
+      open: num(tickets.new) + num(tickets.triaged) + num(tickets.assigned) + num(tickets.reopened),
+      slaRisk: num(sla.response_sla_at_risk) + num(sla.resolution_sla_at_risk),
+      slaBreached: num(sla.response_sla_breached) + num(sla.resolution_sla_breached),
       avgResolution: 'N/A',
       slaCompliance:
         total > 0

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getTicketById, triageTicket } from '../../api/tickets'
+import { getCategories } from '../../api/config'
 import { Card, LoadingState, EmptyState } from '../../components/UI'
 
 export default function AgentTriage() {
@@ -8,8 +9,13 @@ export default function AgentTriage() {
   const navigate = useNavigate()
   // undefined = لسه بيحمّل، null = التذكرة مش موجودة
   const [ticket, setTicket] = useState(undefined)
+  const [categories, setCategories] = useState([])
   const [category, setCategory] = useState('')
   const [priority, setPriority] = useState('')
+
+  useEffect(() => {
+    getCategories().then(setCategories).catch(() => {})
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -18,8 +24,9 @@ export default function AgentTriage() {
       .then((t) => {
         if (cancelled) return
         setTicket(t)
-        setCategory(t?.aiSuggestion?.category || t?.category || '')
-        setPriority(t?.aiSuggestion?.priority || t?.priority || '')
+        // Backend identifies categories by UUID; match the ticket's category name to its id when possible
+        setCategory(t?.category_id || t?.category || '')
+        setPriority(String(t?.aiSuggestion?.priority || t?.priority || 'medium').toLowerCase())
       })
       .catch(() => { if (!cancelled) setTicket(null) })
     return () => { cancelled = true }
@@ -36,7 +43,7 @@ export default function AgentTriage() {
   }
 
   async function handleConfirm() {
-    await triageTicket(id, { category, priority, status: 'progress' })
+    await triageTicket(id, { category_id: category, category, priority })
     navigate(`/ticket/${id}`)
   }
 
@@ -48,7 +55,7 @@ export default function AgentTriage() {
       <div className="grid2">
         <Card title="Current">
           <div className="row-list">
-            <div className="item"><span>Category</span><span>{category || 'Uncategorized'}</span></div>
+            <div className="item"><span>Category</span><span>{categories.find((c) => String(c.id) === String(category))?.name || ticket.category || 'Uncategorized'}</span></div>
             <div className="item"><span>Priority</span><span>{priority || 'Medium'}</span></div>
             <div className="item"><span>Team</span><span>{ticket.team || '—'}</span></div>
             <div className="item"><span>Technician</span><span>{ticket.technician || '—'}</span></div>
@@ -82,7 +89,10 @@ export default function AgentTriage() {
       <div className="field">
         <label>Category</label>
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option>Network</option><option>Electrical</option><option>Plumbing</option><option>HVAC</option>
+          <option value="">Select category</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
         </select>
       </div>
       <div className="field">
