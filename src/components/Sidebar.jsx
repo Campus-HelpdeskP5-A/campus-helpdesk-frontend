@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
 const NAV_BY_ROLE = {
   reporter: [
@@ -33,6 +34,7 @@ const NAV_BY_ROLE = {
 export default function Sidebar({ role, userName }) {
   const items = NAV_BY_ROLE[role] || []
   const { logout } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
 
   function handleLogout() {
@@ -53,14 +55,14 @@ export default function Sidebar({ role, userName }) {
             end={item.end}
             className={({ isActive }) => (isActive ? 'active' : '')}
           >
-            {item.label}
+            {t(item.label)}
           </NavLink>
         ))}
       </nav>
       <div className="foot">
         {userName} ·{' '}
         <span onClick={handleLogout} style={{ cursor: 'pointer', textDecoration: 'underline' }}>
-          Logout
+          {t('Logout')}
         </span>
       </div>
     </aside>

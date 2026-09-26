@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { getPendingAccounts, approveAccount, rejectAccount } from '../../api/users'
 import { LoadingState, EmptyState, Tag } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function AccountRequests() {
+  const { t } = useLanguage()
   const [list, setList] = useState(null)
 
   useEffect(() => {
@@ -22,13 +24,13 @@ export default function AccountRequests() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>Account requests</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Account requests')}</h2>
       {list.length === 0 ? (
         <EmptyState>مفيش طلبات حسابات جديدة.</EmptyState>
       ) : (
         <table className="mini">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Requested role</th><th>Requested at</th><th></th></tr>
+            <tr><th>{t('Name')}</th><th>{t('Email')}</th><th>{t('Requested role')}</th><th>{t('Requested at')}</th><th></th></tr>
           </thead>
           <tbody>
             {list.map((u) => (
@@ -38,8 +40,8 @@ export default function AccountRequests() {
                 <td><Tag variant="pending">{u.requestedRole}</Tag></td>
                 <td>{u.requestedAt}</td>
                 <td className="btn-row">
-                  <button className="btn sm primary" onClick={() => handleApprove(u.id)}>Approve</button>
-                  <button className="btn sm ghost" onClick={() => handleReject(u.id)}>Reject</button>
+                  <button className="btn sm primary" onClick={() => handleApprove(u.id)}>{t('Approve')}</button>
+                  <button className="btn sm ghost" onClick={() => handleReject(u.id)}>{t('Reject')}</button>
                 </td>
               </tr>
             ))}

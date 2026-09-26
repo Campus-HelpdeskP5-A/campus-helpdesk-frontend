@@ -1,7 +1,6 @@
 export function Tag({ variant = 'open', children }) {
   return <span className={`tag ${variant}`}>{children}</span>
 }
-
 export function Kpi({ num, label }) {
   return (
     <div className="kpi">

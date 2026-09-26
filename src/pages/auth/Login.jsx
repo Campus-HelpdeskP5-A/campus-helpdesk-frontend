@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ErrorBanner } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 const ROLE_HOME = {
   reporter: '/reporter',
@@ -12,6 +13,7 @@ const ROLE_HOME = {
 }
 export default function Login() {
   const { login, loading, error } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,7 +41,7 @@ export default function Login() {
         <ErrorBanner>{error}</ErrorBanner>
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label>Email</label>
+            <label>{t('Email')}</label>
             <input
               type="email"
               required
@@ -49,7 +51,7 @@ export default function Login() {
             />
           </div>
           <div className="field">
-            <label>Password</label>
+            <label>{t('Password')}</label>
             <input
               type="password"
               required
@@ -59,11 +61,11 @@ export default function Login() {
             />
           </div>
           <button className="btn primary" type="submit" disabled={loading} style={{ width: '100%' }}>
-            {loading ? '...' : 'Login'}
+            {loading ? '...' : t('Login')}
           </button>
         </form>
         <div className="auth-footer">
-          مالكش حساب؟ <Link to="/register"><button type="button">Register</button></Link>
+          مالكش حساب؟ <Link to="/register"><button type="button">{t('Register')}</button></Link>
         </div>
       </div>
     </div>

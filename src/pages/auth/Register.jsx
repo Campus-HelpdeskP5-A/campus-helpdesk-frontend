@@ -4,10 +4,12 @@ import Logo from '../../components/Logo'
 import { ErrorBanner } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { isPendingStatus } from '../../api/users'
 
 export default function Register() {
   const { register, loading, error } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const { showToast } = useToast()
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'reporter' })
@@ -39,16 +41,16 @@ export default function Register() {
       <div className="center-card" style={{ maxWidth: 400 }}>
         <div className="auth-head">
           <Logo />
-          <h3>Create account</h3>
+          <h3>{t('Create account')}</h3>
         </div>
         <ErrorBanner>{error}</ErrorBanner>
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label>Full name</label>
-            <input required value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Enter your name" />
+            <label>{t('Full name')}</label>
+            <input required value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('Enter your name')} />
           </div>
           <div className="field">
-            <label>Email</label>
+            <label>{t('Email')}</label>
             <input
               type="email"
               required
@@ -58,30 +60,30 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>Password</label>
+            <label>{t('Password')}</label>
             <input
               type="password"
               required
               minLength={8}
-              placeholder="8 characters at least"
+              placeholder={t('8 characters at least')}
               value={form.password}
               onChange={(e) => update('password', e.target.value)}
             />
           </div>
           <div className="field">
-            <label>Account type</label>
+            <label>{t('Account type')}</label>
             <select value={form.role} onChange={(e) => update('role', e.target.value)}>
-              <option value="reporter">Reporter</option>
-              <option value="technician">Technician (needs manager approval)</option>
-              <option value="manager">Manager (needs manager approval)</option>
+              <option value="reporter">{t('Reporter')}</option>
+              <option value="technician">{t('Technician (needs manager approval)')}</option>
+              <option value="manager">{t('Manager (needs manager approval)')}</option>
             </select>
           </div>
           <button className="btn primary" type="submit" disabled={loading} style={{ width: '100%' }}>
-            {loading ? '...' : 'Create account'}
+            {loading ? '...' : t('Create account')}
           </button>
         </form>
         <div className="auth-footer">
-          عندك حساب؟ <Link to="/login"><button type="button">Login</button></Link>
+          عندك حساب؟ <Link to="/login"><button type="button">{t('Login')}</button></Link>
         </div>
       </div>
     </div>

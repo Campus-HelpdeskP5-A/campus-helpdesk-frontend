@@ -2,15 +2,17 @@
 import { Link } from 'react-router-dom'
 import { getTickets, getKpiSummary } from '../../api/tickets'
 import { Kpi, Tag, LoadingState, EmptyState } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 const STATUS_LABELS = {
   open: 'Open',
   progress: 'In progress',
-  pending: 'Pending',
+  pending: 'Waiting',
   done: 'Resolved',
 }
 
 export default function ReporterDashboard() {
+  const { t } = useLanguage()
   const [tickets, setTickets] = useState(null)
   const [kpis, setKpis] = useState(null)
   const [filters, setFilters] = useState({
@@ -56,24 +58,24 @@ export default function ReporterDashboard() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>My tickets</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('My tickets')}</h2>
 
       {kpis && (
         <div className="kpi-row">
-          <Kpi num={kpis.total} label="Total" />
-          <Kpi num={kpis.open} label="Open" />
-          <Kpi num={kpis.progress} label="In progress" />
-          <Kpi num={kpis.resolved} label="Resolved" />
+          <Kpi num={kpis.total} label={t('Total')} />
+          <Kpi num={kpis.open} label={t('Open')} />
+          <Kpi num={kpis.progress} label={t('In progress')} />
+          <Kpi num={kpis.resolved} label={t('Resolved')} />
         </div>
       )}
 
       <div className="btn-row" style={{ marginBottom: 16 }}>
         <Link to="/reporter/new">
-          <button className="btn primary sm">+ Create ticket</button>
+          <button className="btn primary sm">+ {t('Create ticket')}</button>
         </Link>
 
         <input
-          placeholder="Search tickets..."
+          placeholder={t('Search tickets...')}
           style={{
             flex: 1,
             minWidth: 140,
@@ -98,11 +100,11 @@ export default function ReporterDashboard() {
             setFilters((f) => ({ ...f, status: e.target.value }))
           }
         >
-          <option value="">Status</option>
-          <option value="open">Open</option>
-          <option value="progress">In progress</option>
-          <option value="pending">Pending</option>
-          <option value="done">Resolved</option>
+          <option value="">{t('Status')}</option>
+          <option value="open">{t('Open')}</option>
+          <option value="progress">{t('In progress')}</option>
+          <option value="pending">{t('Waiting')}</option>
+          <option value="done">{t('Resolved')}</option>
         </select>
 
         <select
@@ -112,18 +114,18 @@ export default function ReporterDashboard() {
             setFilters((f) => ({ ...f, priority: e.target.value }))
           }
         >
-          <option value="">Priority</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="critical">Critical</option>
+          <option value="">{t('Priority')}</option>
+          <option value="low">{t('Low')}</option>
+          <option value="medium">{t('Medium')}</option>
+          <option value="high">{t('High')}</option>
+          <option value="critical">{t('Critical')}</option>
         </select>
       </div>
 
       {!filteredTickets && <LoadingState />}
 
       {filteredTickets && filteredTickets.length === 0 && (
-        <EmptyState>No tickets found.</EmptyState>
+        <EmptyState>{t('No tickets found.')}</EmptyState>
       )}
 
       {filteredTickets && filteredTickets.length > 0 && (
@@ -141,7 +143,7 @@ export default function ReporterDashboard() {
               </span>
 
               <Tag variant={ticket.status}>
-                {STATUS_LABELS[ticket.status] || ticket.status}
+                {t(STATUS_LABELS[ticket.status] || ticket.status)}
               </Tag>
             </Link>
           ))}

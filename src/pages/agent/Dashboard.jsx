@@ -2,15 +2,17 @@
 import { Link } from 'react-router-dom'
 import { getTickets, getKpiSummary } from '../../api/tickets'
 import { Kpi, Tag, LoadingState } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 const STATUS_LABELS = {
   open: 'Open',
   progress: 'In progress',
-  pending: 'Pending',
+  pending: 'Waiting',
   done: 'Resolved',
 }
 
 export default function AgentDashboard() {
+  const { t } = useLanguage()
   const [tickets, setTickets] = useState(null)
   const [kpis, setKpis] = useState(null)
 
@@ -26,32 +28,32 @@ export default function AgentDashboard() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>Agent dashboard</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Agent dashboard')}</h2>
 
       {kpis && (
         <div className="kpi-row">
-          <Kpi num={kpis.new} label="New" />
-          <Kpi num={kpis.slaRisk} label="SLA risk" />
-          <Kpi num={kpis.urgent} label="Urgent" />
-          <Kpi num={kpis.overdue} label="Overdue" />
-          <Kpi num={kpis.escalations} label="Escalations" />
+          <Kpi num={kpis.new} label={t('New')} />
+          <Kpi num={kpis.slaRisk} label={t('SLA risk')} />
+          <Kpi num={kpis.urgent} label={t('Urgent')} />
+          <Kpi num={kpis.overdue} label={t('Overdue')} />
+          <Kpi num={kpis.escalations} label={t('Escalations')} />
         </div>
       )}
 
       {!tickets && <LoadingState />}
 
       {tickets && tickets.length === 0 && (
-        <p>No tickets found.</p>
+        <p>{t('No tickets found.')}</p>
       )}
 
       {tickets && tickets.length > 0 && (
         <table className="mini">
           <thead>
             <tr>
-              <th>Ticket</th>
-              <th>Category</th>
-              <th>Priority</th>
-              <th>Status</th>
+              <th>{t('Ticket')}</th>
+              <th>{t('Category')}</th>
+              <th>{t('Priority')}</th>
+              <th>{t('Status')}</th>
               <th></th>
             </tr>
           </thead>
@@ -75,13 +77,13 @@ export default function AgentDashboard() {
 
                 <td>
                   <Tag variant={ticket.status}>
-                    {STATUS_LABELS[ticket.status] || ticket.status}
+                    {t(STATUS_LABELS[ticket.status] || ticket.status)}
                   </Tag>
                 </td>
 
                 <td>
                   <Link to={`/agent/triage/${ticket.id}`}>
-                    <button className="btn sm">Review</button>
+                    <button className="btn sm">{t('Review')}</button>
                   </Link>
                 </td>
               </tr>

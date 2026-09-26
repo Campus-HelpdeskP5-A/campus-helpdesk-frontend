@@ -3,6 +3,7 @@ import { getAllUsers, updateUserRole, deleteUser } from '../../api/users'
 import { LoadingState, Tag } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 const ROLES = ['reporter', 'agent', 'technician', 'manager', 'auditor']
 const ROLE_LABEL = {
@@ -16,6 +17,7 @@ const ROLE_LABEL = {
 export default function UserManagement() {
   const { user: currentUser } = useAuth()
   const { showToast } = useToast()
+  const { t } = useLanguage()
   const [users, setUsers] = useState(null)
   const [savingId, setSavingId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -55,17 +57,17 @@ export default function UserManagement() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 6 }}>User management</h2>
+      <h2 style={{ marginBottom: 6 }}>{t('User management')}</h2>
       <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 18 }}>
         كل حساب جديد بيتسجل كـ Reporter تلقائي. من هنا تقدر تخلي أي حساب Technician أو Manager أو Agent أو Auditor.
       </p>
       <table className="mini">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Current role</th>
-            <th>Change role to</th>
+            <th>{t('Name')}</th>
+            <th>{t('Email')}</th>
+            <th>{t('Current role')}</th>
+            <th>{t('Change role to')}</th>
             <th></th>
           </tr>
         </thead>
@@ -77,7 +79,7 @@ export default function UserManagement() {
             <tr key={u.id}>
               <td>{u.name}</td>
               <td>{u.email}</td>
-              <td><Tag variant="active">{ROLE_LABEL[u.role] || u.role}</Tag></td>
+              <td><Tag variant="active">{t(ROLE_LABEL[u.role] || u.role)}</Tag></td>
               <td>
                 <select
                   className="btn ghost sm"
@@ -86,7 +88,7 @@ export default function UserManagement() {
                   onChange={(e) => handleRoleChange(u.id, e.target.value)}
                 >
                   {ROLES.map((r) => (
-                    <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                    <option key={r} value={r}>{t(ROLE_LABEL[r])}</option>
                   ))}
                 </select>
               </td>
@@ -98,7 +100,7 @@ export default function UserManagement() {
                   title={isSelf ? 'مينفعش تحذف حسابك الحالي' : 'حذف المستخدم'}
                   onClick={() => handleDelete(u)}
                 >
-                  {deletingId === u.id ? '...' : 'Delete'}
+                  {deletingId === u.id ? '...' : t('Delete')}
                 </button>
               </td>
             </tr>

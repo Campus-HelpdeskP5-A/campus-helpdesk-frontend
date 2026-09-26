@@ -4,11 +4,13 @@ import { getTicketById, triageTicket, addComment, createEscalation, getTicketPre
 import { getCategories, getSupportTeams } from '../../api/config'
 import { Card, LoadingState, EmptyState } from '../../components/UI'
 import { useToast } from '../../context/ToastContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function AgentTriage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const { t } = useLanguage()
   // undefined = لسه بيحمّل، null = التذكرة مش موجودة
   const [ticket, setTicket] = useState(undefined)
   const [categories, setCategories] = useState([])
@@ -119,14 +121,14 @@ export default function AgentTriage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h2 style={{ marginBottom: 18 }}>Triage — {ticket.id}</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Triage')} — {ticket.id}</h2>
       <div className="grid2">
-        <Card title="Current">
+        <Card title={t('Current')}>
           <div className="row-list">
-            <div className="item"><span>Category</span><span>{categories.find((c) => String(c.id) === String(category))?.name || ticket.category || 'Uncategorized'}</span></div>
-            <div className="item"><span>Priority</span><span>{priority || 'Medium'}</span></div>
-            <div className="item"><span>Team</span><span>{ticket.team || '—'}</span></div>
-            <div className="item"><span>Technician</span><span>{ticket.technician || '—'}</span></div>
+            <div className="item"><span>{t('Category')}</span><span>{categories.find((c) => String(c.id) === String(category))?.name || ticket.category || 'Uncategorized'}</span></div>
+            <div className="item"><span>{t('Priority')}</span><span>{priority || 'Medium'}</span></div>
+            <div className="item"><span>{t('Team')}</span><span>{ticket.team || '—'}</span></div>
+            <div className="item"><span>{t('Technician')}</span><span>{ticket.technician || '—'}</span></div>
           </div>
         </Card>
         {ai && (
@@ -155,33 +157,33 @@ export default function AgentTriage() {
         </Card>
       )}
       <div className="field">
-        <label>Category</label>
+        <label>{t('Category')}</label>
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Select category</option>
+          <option value="">{t('Select category')}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       </div>
       <div className="field">
-        <label>Priority</label>
+        <label>{t('Priority')}</label>
         <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-          <option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+          <option value="critical">{t('Critical')}</option><option value="medium">{t('Medium')}</option><option value="high">{t('High')}</option><option value="low">{t('Low')}</option>
         </select>
       </div>
       <div className="field">
-        <label>Escalate to team</label>
+        <label>{t('Escalate to team')}</label>
         <select value={escalateTeam} onChange={(e) => setEscalateTeam(e.target.value)}>
-          <option value="">Select team</option>
-          {teams.map((t) => (
-            <option key={t.id} value={t.id}>{t.name}</option>
+          <option value="">{t('Select team')}</option>
+          {teams.map((tm) => (
+            <option key={tm.id} value={tm.id}>{tm.name}</option>
           ))}
         </select>
       </div>
       <div className="btn-row">
-        <button className="btn ghost sm" disabled={busy} onClick={handleRequestInfo}>Request info</button>
-        <button className="btn ghost sm" disabled={busy} onClick={handleEscalate}>Escalate</button>
-        <button className="btn primary sm" disabled={busy} onClick={handleConfirm}>Confirm & assign</button>
+        <button className="btn ghost sm" disabled={busy} onClick={handleRequestInfo}>{t('Request info')}</button>
+        <button className="btn ghost sm" disabled={busy} onClick={handleEscalate}>{t('Escalate')}</button>
+        <button className="btn primary sm" disabled={busy} onClick={handleConfirm}>{t('Confirm & assign')}</button>
       </div>
     </div>
   )

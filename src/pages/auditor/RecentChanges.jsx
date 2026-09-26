@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAuditLog } from '../../api/audit'
 import { LoadingState } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function RecentChanges() {
+  const { t } = useLanguage()
   const [log, setLog] = useState(null)
   const [userFilter, setUserFilter] = useState('ALL')
   const [actionFilter, setActionFilter] = useState('ALL')
@@ -74,7 +76,7 @@ export default function RecentChanges() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>Recent changes</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Recent changes')}</h2>
 
       <div className="btn-row" style={{ marginBottom: 14 }}>
         <select
@@ -135,10 +137,10 @@ export default function RecentChanges() {
       <table className="mini">
         <thead>
           <tr>
-            <th>User</th>
-            <th>Action</th>
-            <th>Entity</th>
-            <th>Date</th>
+            <th>{t('User')}</th>
+            <th>{t('Action')}</th>
+            <th>{t('Entity')}</th>
+            <th>{t('Date')}</th>
           </tr>
         </thead>
 

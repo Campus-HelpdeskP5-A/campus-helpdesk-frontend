@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { getNotifications, markAllRead } from '../../api/notifications'
 import { LoadingState, EmptyState } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function Notifications() {
+  const { t } = useLanguage()
   const [list, setList] = useState(null)
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function Notifications() {
 
   return (
     <div style={{ maxWidth: 440 }}>
-      <h2 style={{ marginBottom: 16 }}>Notifications</h2>
+      <h2 style={{ marginBottom: 16 }}>{t('Notifications')}</h2>
       {list.length === 0 ? (
         <EmptyState>مفيش إشعارات جديدة.</EmptyState>
       ) : (
@@ -32,7 +34,7 @@ export default function Notifications() {
         </div>
       )}
       <button className="btn ghost sm" style={{ width: '100%', marginTop: 12 }} onClick={handleMarkAllRead}>
-        Mark all as read
+        {t('Mark all as read')}
       </button>
     </div>
   )

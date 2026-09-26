@@ -75,7 +75,7 @@ export async function getLocations() {
     return mockDelay(locationsStore)
   }
   return asList(await api.get('/locations')).map((l) => {
-    const name = l.name ?? l.label ?? [l.building, l.room_code].filter(Boolean).join(' — ')
+    const name = l.name ?? l.label ?? [l.building, l.floor, l.room_code].filter(Boolean).join(' — ')
     return {
       ...l,
       id: l.id ?? l.location_id,
@@ -83,6 +83,25 @@ export async function getLocations() {
       label: l.label ?? name,
     }
   })
+}
+
+/** POST /locations { building, room_code, floor?, description? } */
+export async function createLocation(payload) {
+  if (USE_MOCKS) {
+    const loc = { id: `loc-${Date.now()}`, name: [payload.building, payload.room_code].filter(Boolean).join(' — '), ...payload }
+    locationsStore = [...(locationsStore || []), loc]
+    return mockDelay(loc)
+  }
+  return api.post('/locations', payload)
+}
+
+/** PUT /locations/:id { building?, floor?, room_code?, description? } */
+export async function updateLocation(id, payload) {
+  if (USE_MOCKS) {
+    locationsStore = (locationsStore || []).map((l) => (l.id === id ? { ...l, ...payload } : l))
+    return mockDelay({ success: true })
+  }
+  return api.put(`/locations/${id}`, payload)
 }
 
 // Other configuration endpoints your backend will likely also expose:

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getTickets } from '../../api/tickets'
 import { getLocations, getSupportTeams, getTechnicians } from '../../api/config'
 import { Tag, LoadingState, Card } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 const initialFilters = {
   status: '',
@@ -14,6 +15,7 @@ const initialFilters = {
 }
 
 export default function TechnicianDashboard() {
+  const { t } = useLanguage()
   const [tickets, setTickets] = useState(null)
   const [filters, setFilters] = useState(initialFilters)
   const [teams, setTeams] = useState([])
@@ -52,52 +54,52 @@ export default function TechnicianDashboard() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>Technician Queue</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Technician Queue')}</h2>
 
-      <Card title="Queue filters">
+      <Card title={t('Queue filters')}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
           <select value={filters.status} onChange={(e) => updateFilter('status', e.target.value)}>
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="progress">In progress</option>
-            <option value="pending">Waiting</option>
-            <option value="done">Resolved / closed</option>
+            <option value="">{t('All statuses')}</option>
+            <option value="open">{t('Open')}</option>
+            <option value="progress">{t('In progress')}</option>
+            <option value="pending">{t('Waiting')}</option>
+            <option value="done">{t('Resolved')}</option>
           </select>
 
           <select value={filters.priority} onChange={(e) => updateFilter('priority', e.target.value)}>
-            <option value="">All priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
+            <option value="">{t('All priorities')}</option>
+            <option value="low">{t('Low')}</option>
+            <option value="medium">{t('Medium')}</option>
+            <option value="high">{t('High')}</option>
+            <option value="critical">{t('Critical')}</option>
           </select>
 
           <select value={filters.team_id} onChange={(e) => updateFilter('team_id', e.target.value)}>
-            <option value="">All teams</option>
+            <option value="">{t('All teams')}</option>
             {teams.map((team) => (
               <option key={team.id} value={team.id}>{team.name}</option>
             ))}
           </select>
 
           <select value={filters.assignee_id} onChange={(e) => updateFilter('assignee_id', e.target.value)}>
-            <option value="">All assignees</option>
+            <option value="">{t('All assignees')}</option>
             {technicians.map((technician) => (
               <option key={technician.id} value={technician.id}>{technician.name}</option>
             ))}
           </select>
 
           <select value={filters.location_id} onChange={(e) => updateFilter('location_id', e.target.value)}>
-            <option value="">All locations</option>
+            <option value="">{t('All locations')}</option>
             {locations.map((location) => (
               <option key={location.id} value={location.id}>{location.label}</option>
             ))}
           </select>
 
           <select value={filters.due} onChange={(e) => updateFilter('due', e.target.value)}>
-            <option value="">Any due time</option>
-            <option value="overdue">Overdue</option>
-            <option value="today">Due today</option>
-            <option value="upcoming">Upcoming</option>
+            <option value="">{t('Any due time')}</option>
+            <option value="overdue">{t('Overdue')}</option>
+            <option value="today">{t('Due today')}</option>
+            <option value="upcoming">{t('Upcoming')}</option>
           </select>
         </div>
 
@@ -107,7 +109,7 @@ export default function TechnicianDashboard() {
           onClick={() => setFilters(initialFilters)}
           style={{ marginTop: 12 }}
         >
-          Clear filters
+          {t('Clear filters')}
         </button>
 
         <div style={{ marginTop: 12, fontSize: 12.5, opacity: 0.75 }}>
@@ -115,9 +117,9 @@ export default function TechnicianDashboard() {
         </div>
       </Card>
 
-      <Card title="Capacity">
+      <Card title={t('Capacity')}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 6 }}>
-          <span>Active tickets</span><span>{active.length} / 8</span>
+          <span>{t('Active tickets')}</span><span>{active.length} / 8</span>
         </div>
         <div className="progress-thin"><i style={{ width: `${Math.min((active.length / 8) * 100, 100)}%` }} /></div>
       </Card>

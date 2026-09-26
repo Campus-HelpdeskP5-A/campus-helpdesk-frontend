@@ -236,6 +236,24 @@ export async function createEscalation(payload) {
   return api.post('/escalations', payload)
 }
 
+/** GET /escalations/ticket/:ticketId -> Escalation[] */
+export async function getTicketEscalations(ticketId) {
+  if (USE_MOCKS) return mockDelay([])
+  return asList(await api.get(`/escalations/ticket/${ticketId}`))
+}
+
+/** PATCH /escalations/:id/resolve */
+export async function resolveEscalation(escalationId, payload = {}) {
+  if (USE_MOCKS) return mockDelay({ success: true })
+  return api.patch(`/escalations/${escalationId}/resolve`, payload)
+}
+
+/** GET /work-logs/ticket/:ticketId -> WorkLog[] */
+export async function getTicketWorkLogs(ticketId) {
+  if (USE_MOCKS) return mockDelay([])
+  return asList(await api.get(`/work-logs/ticket/${ticketId}`))
+}
+
 /** GET /tickets/:id  -> ticket | null لو مش موجودة */
 export async function getTicketById(id) {
   if (USE_MOCKS) {

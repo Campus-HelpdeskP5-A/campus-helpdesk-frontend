@@ -1,10 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import { useLanguage } from '../context/LanguageContext'
 import { useEffect, useRef, useState } from 'react'
 import { getNotifications } from '../api/notifications'
 
 export default function Topbar({ showSearch = true, onSearch }) {
   const { user, logout } = useAuth()
+  const { theme, toggle: toggleTheme } = useTheme()
+  const { lang, toggle: toggleLang, t } = useLanguage()
   const navigate = useNavigate()
   const [hasUnread, setHasUnread] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -44,16 +48,30 @@ export default function Topbar({ showSearch = true, onSearch }) {
       <div className="search">
         {showSearch && (
           <input
-            placeholder="Search…"
+            placeholder={t('Search…')}
             onChange={(e) => onSearch && onSearch(e.target.value)}
           />
         )}
       </div>
       <div className="topbar-right">
         <button
+          className="bell"
+          onClick={toggleLang}
+          title={lang === 'ar' ? 'English' : 'عربي'}
+        >
+          {lang === 'ar' ? 'EN' : 'ع'}
+        </button>
+        <button
+          className="bell"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <button
           className={`bell${hasUnread ? ' has-unread' : ''}`}
           onClick={() => navigate('/notifications')}
-          title="Notifications"
+          title={t('Notifications')}
         >
           🔔
         </button>
@@ -96,7 +114,7 @@ export default function Topbar({ showSearch = true, onSearch }) {
                   navigate('/login')
                 }}
               >
-                Logout
+                {t('Logout')}
               </button>
             </div>
           )}

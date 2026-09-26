@@ -5,12 +5,15 @@ import {
   getBusinessHours, createBusinessHours, updateBusinessHours,
   getSlaProfiles, createSlaProfile, updateSlaProfile,
   getPriorityMatrix, createPriorityMatrix, updatePriorityMatrix,
+  getLocations, createLocation,
 } from '../../api/config'
 import { LoadingState, Tag } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
-const TABS = ['Categories', 'Support teams', 'SLA profiles', 'Business hours', 'Priority matrix']
+const TABS = ['Categories', 'Locations', 'Support teams', 'SLA profiles', 'Business hours', 'Priority matrix']
 
 export default function Configuration() {
+  const { t } = useLanguage()
   const [tab, setTab] = useState('Categories')
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -20,6 +23,7 @@ export default function Configuration() {
     setData(null)
     const loaders = {
       Categories: getCategories,
+      Locations: getLocations,
       'Support teams': getSupportTeams,
       'SLA profiles': getSlaProfiles,
       'Business hours': getBusinessHours,
@@ -28,23 +32,24 @@ export default function Configuration() {
     loaders[tab]().then(setData).catch((e) => setError(e?.message || 'Failed to load configuration'))
   }, [tab])
 
-  if (!data) return <div><h2 style={{ marginBottom: 18 }}>System configuration</h2><div className="btn-row" style={{ marginBottom: 16 }}>{TABS.map((t) => <button key={t} className={`btn sm${tab === t ? ' primary' : ' ghost'}`} onClick={() => setTab(t)}>{t}</button>)}</div>{error ? <p>{error}</p> : <LoadingState />}</div>
+  if (!data) return <div><h2 style={{ marginBottom: 18 }}>{t('System configuration')}</h2><div className="btn-row" style={{ marginBottom: 16 }}>{TABS.map((tb) => <button key={tb} className={`btn sm${tab === tb ? ' primary' : ' ghost'}`} onClick={() => setTab(tb)}>{t(tb)}</button>)}</div>{error ? <p>{error}</p> : <LoadingState />}</div>
 
   const refresh = () => {
     setData(null)
     setError('')
-    const loaders = { Categories: getCategories, 'Support teams': getSupportTeams, 'SLA profiles': getSlaProfiles, 'Business hours': getBusinessHours, 'Priority matrix': getPriorityMatrix }
+    const loaders = { Categories: getCategories, Locations: getLocations, 'Support teams': getSupportTeams, 'SLA profiles': getSlaProfiles, 'Business hours': getBusinessHours, 'Priority matrix': getPriorityMatrix }
     loaders[tab]().then(setData).catch((e) => setError(e?.message || 'Failed to load configuration'))
   }
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>System configuration</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('System configuration')}</h2>
       <div className="btn-row" style={{ marginBottom: 16 }}>
-        {TABS.map((t) => <button key={t} className={`btn sm${tab === t ? ' primary' : ' ghost'}`} onClick={() => setTab(t)}>{t}</button>)}
+        {TABS.map((tb) => <button key={tb} className={`btn sm${tab === tb ? ' primary' : ' ghost'}`} onClick={() => setTab(tb)}>{t(tb)}</button>)}
       </div>
       {error && <p style={{ color: 'var(--danger)' }}>{error}</p>}
       {tab === 'Categories' && <Categories data={data} refresh={refresh} />}
+      {tab === 'Locations' && <Locations data={data} refresh={refresh} />}
       {tab === 'Support teams' && <Teams data={data} refresh={refresh} />}
       {tab === 'SLA profiles' && <SlaProfiles data={data} refresh={refresh} />}
       {tab === 'Business hours' && <BusinessHours data={data} refresh={refresh} />}
@@ -58,6 +63,45 @@ function Categories({ data, refresh }) {
   async function add() { if (!name.trim()) return; await addCategory({ name: name.trim(), team: 'Unassigned' }); setName(''); refresh() }
   async function toggle(c) { await toggleCategory(c.id, !c.active); refresh() }
   return <><table className="mini"><thead><tr><th>Category</th><th>Support team</th><th>Status</th><th /></tr></thead><tbody>{data.map(c => <tr key={c.id}><td>{c.name}</td><td>{c.team || 'Unassigned'}</td><td><Tag variant={c.active ? 'done' : 'progress'}>{c.active ? 'Active' : 'Inactive'}</Tag></td><td><button className="btn sm ghost" onClick={() => toggle(c)}>{c.active ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody></table><FormRow value={name} onChange={setName} placeholder="New category" onSubmit={add} /></>
+}
+
+function Locations({ data, refresh }) {
+  const [form, setForm] = useState({ building: '', floor: '', room_code: '', description: '' })
+  async function add() {
+    if (!form.building.trim() || !form.room_code.trim()) return
+    await createLocation({
+      building: form.building.trim(),
+      room_code: form.room_code.trim(),
+      ...(form.floor.trim() ? { floor: form.floor.trim() } : {}),
+      ...(form.description.trim() ? { description: form.description.trim() } : {}),
+    })
+    setForm({ building: '', floor: '', room_code: '', description: '' })
+    refresh()
+  }
+  return (
+    <>
+      <table className="mini">
+        <thead><tr><th>Building</th><th>Floor</th><th>Room</th><th>Description</th></tr></thead>
+        <tbody>
+          {data.map(l => (
+            <tr key={l.id || l.location_id}>
+              <td>{l.building || '—'}</td>
+              <td>{l.floor || '—'}</td>
+              <td>{l.room_code || l.name || '—'}</td>
+              <td>{l.description || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="btn-row" style={{ marginTop: 14 }}>
+        <input placeholder="Building" value={form.building} onChange={e => setForm({ ...form, building: e.target.value })} />
+        <input placeholder="Floor" value={form.floor} onChange={e => setForm({ ...form, floor: e.target.value })} />
+        <input placeholder="Room code" value={form.room_code} onChange={e => setForm({ ...form, room_code: e.target.value })} />
+        <input placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+        <button className="btn primary sm" onClick={add}>+ Add location</button>
+      </div>
+    </>
+  )
 }
 
 function Teams({ data, refresh }) {

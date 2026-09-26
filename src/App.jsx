@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
+import { LanguageProvider } from './context/LanguageContext'
+import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './layouts/AppLayout'
 
@@ -46,6 +48,8 @@ function HomeRedirect() {
 export default function App() {
   return (
     <BrowserRouter>
+      <LanguageProvider>
+      <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
         <Routes>
@@ -115,6 +119,8 @@ export default function App() {
         </Routes>
       </ToastProvider>
       </AuthProvider>
+      </ThemeProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
 }

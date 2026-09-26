@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getTicketById, updateTicketStatus, addComment, getTicketComments, getTicketHistory, getTicketAttachments, confirmResolution, reopenTicket } from '../../api/tickets'
+import { getTicketById, updateTicketStatus, addComment, getTicketComments, getTicketHistory, getTicketAttachments, getTicketEscalations, resolveEscalation, getTicketWorkLogs, confirmResolution, reopenTicket } from '../../api/tickets'
 import { createFeedback, getTicketFeedback } from '../../api/feedback'
 import { Tag, LoadingState, EmptyState, Card } from '../../components/UI'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 const PRIORITY_LABEL = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' }
-const STATUS_LABEL = { open: 'Open', progress: 'In progress', pending: 'Pending', done: 'Resolved' }
+const STATUS_LABEL = { open: 'Open', progress: 'In progress', pending: 'Waiting', done: 'Resolved' }
 
 export default function TicketDetails() {
   const { id } = useParams()
   const { user } = useAuth()
+  const { showToast } = useToast()
+  const { t } = useLanguage()
   // undefined = لسه بيحمّل، null = التذكرة مش موجودة
   const [ticket, setTicket] = useState(undefined)
   const [comments, setComments] = useState([])
   const [timeline, setTimeline] = useState([])
   const [attachments, setAttachments] = useState([])
+  const [escalations, setEscalations] = useState([])
+  const [workLogs, setWorkLogs] = useState([])
   const [comment, setComment] = useState('')
   const [feedback, setFeedback] = useState([])
   const [rating, setRating] = useState('5')
@@ -30,14 +36,18 @@ export default function TicketDetails() {
       getTicketComments(id).catch(() => []),
       getTicketHistory(id).catch(() => []),
       getTicketAttachments(id).catch(() => []),
+      getTicketEscalations(id).catch(() => []),
+      getTicketWorkLogs(id).catch(() => []),
     ])
-      .then(([t, f, c, h, a]) => {
+      .then(([tk, f, c, h, a, esc, wl]) => {
         if (!cancelled) {
-          setTicket(t)
+          setTicket(tk)
           setFeedback(f)
           setComments(c || [])
           setTimeline(h || [])
           setAttachments(a || [])
+          setEscalations(esc || [])
+          setWorkLogs(wl || [])
         }
       })
       .catch(() => { if (!cancelled) setTicket(null) })
@@ -92,6 +102,16 @@ export default function TicketDetails() {
     setComment('')
   }
 
+  async function handleResolveEscalation(escalationId) {
+    try {
+      await resolveEscalation(escalationId)
+      setEscalations((l) => l.map((e) => ((e.escalation_id || e.id) === escalationId ? { ...e, resolved_at: new Date().toISOString() } : e)))
+      showToast('تم حل التصعيد ✅')
+    } catch (err) {
+      showToast(err?.data?.message || err.message || 'Failed to resolve escalation.')
+    }
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
@@ -100,39 +120,39 @@ export default function TicketDetails() {
           <h2 style={{ margin: 0, fontSize: 18 }}>{ticket.title} — {ticket.location}</h2>
         </div>
         <div className="btn-row">
-          <Tag variant={ticket.priority}>{PRIORITY_LABEL[ticket.priority] || ticket.priority}</Tag>
-          <Tag variant={ticket.status}>{STATUS_LABEL[ticket.status] || ticket.status}</Tag>
+          <Tag variant={ticket.priority}>{t(PRIORITY_LABEL[ticket.priority] || ticket.priority)}</Tag>
+          <Tag variant={ticket.status}>{t(STATUS_LABEL[ticket.status] || ticket.status)}</Tag>
         </div>
       </div>
 
       <div className="grid2">
         <div>
-          <Card title="Details">
+          <Card title={t('Details')}>
             <div className="row-list">
-              <div className="item"><span>Reporter</span><span>{ticket.reporter}</span></div>
-              <div className="item"><span>Category</span><span>{ticket.category}</span></div>
-              <div className="item"><span>Location</span><span>{ticket.location}</span></div>
-              <div className="item"><span>Team / technician</span><span>{ticket.team} — {ticket.technician || 'غير محدد'}</span></div>
+              <div className="item"><span>{t('Reporter')}</span><span>{ticket.reporter}</span></div>
+              <div className="item"><span>{t('Category')}</span><span>{ticket.category}</span></div>
+              <div className="item"><span>{t('Location')}</span><span>{ticket.location}</span></div>
+              <div className="item"><span>{t('Team')} / {t('Technician')}</span><span>{ticket.team} — {ticket.technician || 'غير محدد'}</span></div>
             </div>
           </Card>
-          <Card title="Description">
+          <Card title={t('Description')}>
             <p style={{ fontSize: 13.5, margin: 0, color: 'var(--text-secondary)' }}>{ticket.description}</p>
           </Card>
-          <Card title="Timeline">
+          <Card title={t('Timeline')}>
             <div className="row-list">
-              {(timeline.length > 0 ? timeline : (ticket.timeline || [])).map((t, i) => (
-                <div className="item" key={t.id || i}>
-                  <span>{t.label}{t.by ? ` — ${t.by}` : ''}{t.reason ? ` (${t.reason})` : ''}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{t.at}</span>
+              {(timeline.length > 0 ? timeline : (ticket.timeline || [])).map((tm, i) => (
+                <div className="item" key={tm.id || i}>
+                  <span>{tm.label}{tm.by ? ` — ${tm.by}` : ''}{tm.reason ? ` (${tm.reason})` : ''}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>{tm.at}</span>
                 </div>
               ))}
               {timeline.length === 0 && (ticket.timeline || []).length === 0 && (
-                <div className="item"><span style={{ color: 'var(--text-muted)' }}>No history yet.</span></div>
+                <div className="item"><span style={{ color: 'var(--text-muted)' }}>{t('No history yet.')}</span></div>
               )}
             </div>
           </Card>
           {attachments.length > 0 && (
-            <Card title="Attachments">
+            <Card title={t('Attachments')}>
               <div className="row-list">
                 {attachments.map((a) => (
                   <div className="item" key={a.id}>
@@ -143,9 +163,42 @@ export default function TicketDetails() {
               </div>
             </Card>
           )}
+          {workLogs.length > 0 && (
+            <Card title={t('Work logs')}>
+              <div className="row-list">
+                {workLogs.map((w, i) => (
+                  <div className="item" key={w.work_log_id || w.id || i}>
+                    <span>{w.note || w.description || w.action_taken || '—'}{w.time_spent_minutes !== undefined ? ` (${w.time_spent_minutes} min)` : ''}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{w.created_at ? new Date(w.created_at).toLocaleDateString() : ''}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+          {escalations.length > 0 && (
+            <Card title={t('Escalations')}>
+              <div className="row-list">
+                {escalations.map((e) => {
+                  const escId = e.escalation_id || e.id
+                  const resolved = !!e.resolved_at
+                  return (
+                    <div className="item" key={escId}>
+                      <span>
+                        <Tag variant={resolved ? 'done' : 'progress'}>{resolved ? t('Resolved') : t('Open')}</Tag>{' '}
+                        {e.severity || ''}{e.reason ? ` — ${e.reason}` : ''}
+                      </span>
+                      {!resolved && role !== 'reporter' && role !== 'auditor' && (
+                        <button className="btn sm ghost" onClick={() => handleResolveEscalation(escId)}>{t('Resolve')}</button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
         </div>
         <div>
-          <Card title="Comments">
+          <Card title={t('Comments')}>
             {(comments.length > 0 ? comments : (ticket.comments || [])).map((c, i) => (
               <p key={c.id || c.comment_id || i} style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
                 <b>{c.author || c.user_name || 'User'}:</b> {c.text || c.body || ''}
@@ -158,21 +211,21 @@ export default function TicketDetails() {
                 onChange={(e) => setComment(e.target.value)}
                 style={{ flex: 1, height: 34, borderRadius: 8, border: '1.5px solid var(--cream-dark)', background: 'var(--cream)', color: 'var(--text-primary)', padding: '0 10px', fontSize: 12.5 }}
               />
-              <button className="btn sm primary" onClick={handleAddComment}>Send</button>
+              <button className="btn sm primary" onClick={handleAddComment}>{t('Send')}</button>
             </div>
           </Card>
           {role === 'reporter' && ticket.status === 'done' && (
-            <Card title="Resolution">
+            <Card title={t('Resolution')}>
               <div className="btn-row">
-                <button className="btn sm primary" onClick={handleConfirmResolution}>Confirm resolution</button>
-                <button className="btn sm ghost" onClick={handleReopen}>Reopen ticket</button>
+                <button className="btn sm primary" onClick={handleConfirmResolution}>{t('Confirm resolution')}</button>
+                <button className="btn sm ghost" onClick={handleReopen}>{t('Reopen ticket')}</button>
               </div>
             </Card>
           )}
           {role === 'reporter' && (ticket.status === 'done') && (
-            <Card title="Satisfaction">
+            <Card title={t('Satisfaction')}>
               <div className="field">
-                <label>Rating</label>
+                <label>{t('Rating')}</label>
                 <select value={rating} onChange={(e) => setRating(e.target.value)}>
                   <option value="5">5 — Excellent</option>
                   <option value="4">4 — Good</option>
@@ -182,19 +235,19 @@ export default function TicketDetails() {
                 </select>
               </div>
               <textarea value={feedbackComment} onChange={(e) => setFeedbackComment(e.target.value)} placeholder="Optional feedback…" />
-              <button className="btn sm primary" onClick={handleFeedback}>Submit feedback</button>
+              <button className="btn sm primary" onClick={handleFeedback}>{t('Submit feedback')}</button>
             </Card>
           )}
           {feedback.length > 0 && (
-            <Card title="Satisfaction feedback">
+            <Card title={t('Satisfaction feedback')}>
               {feedback.map((f) => <div className="item" key={f.feedback_id}><span>{f.rating}/5</span><span>{f.comment || 'No comment'}</span></div>)}
             </Card>
           )}
           {role !== 'reporter' && role !== 'auditor' && (
-            <Card title="Role actions">
+            <Card title={t('Role actions')}>
               <div className="btn-row">
-                <button className="btn sm primary" onClick={() => handleStatusChange('progress')}>Mark in progress</button>
-                <button className="btn sm ghost" onClick={() => handleStatusChange('done')}>Resolve</button>
+                <button className="btn sm primary" onClick={() => handleStatusChange('progress')}>{t('Mark in progress')}</button>
+                <button className="btn sm ghost" onClick={() => handleStatusChange('done')}>{t('Resolve')}</button>
               </div>
             </Card>
           )}

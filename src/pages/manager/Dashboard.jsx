@@ -1,8 +1,10 @@
 ﻿import { useEffect, useState } from 'react'
 import { getKpiSummary } from '../../api/tickets'
 import { Kpi, Card, LoadingState } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function ManagerDashboard() {
+  const { t } = useLanguage()
   const [kpis, setKpis] = useState(null)
   const [error, setError] = useState(null)
 
@@ -21,7 +23,7 @@ export default function ManagerDashboard() {
   if (error) {
     return (
       <div>
-        <h2 style={{ marginBottom: 18 }}>Manager dashboard</h2>
+        <h2 style={{ marginBottom: 18 }}>{t('Manager dashboard')}</h2>
         <p>Failed to load dashboard data.</p>
       </div>
     )
@@ -29,18 +31,18 @@ export default function ManagerDashboard() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>Manager dashboard</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Manager dashboard')}</h2>
 
       <div className="kpi-row">
-        <Kpi num={kpis.total} label="Total" />
-        <Kpi num={kpis.open} label="Open" />
-        <Kpi num={kpis.slaRisk} label="SLA risk" />
-        <Kpi num={kpis.slaBreached} label="SLA breached" />
-        <Kpi num={kpis.avgResolution} label="Avg resolution" />
+        <Kpi num={kpis.total} label={t('Total')} />
+        <Kpi num={kpis.open} label={t('Open')} />
+        <Kpi num={kpis.slaRisk} label={t('SLA risk')} />
+        <Kpi num={kpis.slaBreached} label={t('SLA breached')} />
+        <Kpi num={kpis.avgResolution} label={t('Avg resolution')} />
       </div>
 
       <div className="grid2">
-        <Card title="SLA compliance">
+        <Card title={t('SLA compliance')}>
           <div
             style={{
               display: 'flex',
@@ -49,7 +51,7 @@ export default function ManagerDashboard() {
               marginBottom: 6,
             }}
           >
-            <span>Current</span>
+            <span>{t('Current')}</span>
             <span>{kpis.slaCompliance}%</span>
           </div>
 
@@ -58,20 +60,20 @@ export default function ManagerDashboard() {
           </div>
         </Card>
 
-        <Card title="Ticket summary">
+        <Card title={t('Ticket summary')}>
           <div className="row-list">
             <div className="item">
-              <span>Open</span>
+              <span>{t('Open')}</span>
               <span>{kpis.open}</span>
             </div>
 
             <div className="item">
-              <span>SLA risk</span>
+              <span>{t('SLA risk')}</span>
               <span>{kpis.slaRisk}</span>
             </div>
 
             <div className="item">
-              <span>SLA breached</span>
+              <span>{t('SLA breached')}</span>
               <span>{kpis.slaBreached}</span>
             </div>
           </div>

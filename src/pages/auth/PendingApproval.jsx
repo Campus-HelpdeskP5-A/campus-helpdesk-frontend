@@ -1,8 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Tag } from '../../components/UI'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function PendingApproval() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const { state } = useLocation()
   return (
     <div className="auth-stage">
@@ -20,17 +22,17 @@ export default function PendingApproval() {
         <div className="row-list" style={{ marginBottom: 18 }}>
           {state?.role && (
             <div className="item">
-              <span>Requested role</span>
+              <span>{t('Requested role')}</span>
               <Tag variant="pending">{state.role}</Tag>
             </div>
           )}
           <div className="item">
-            <span>Status</span>
-            <Tag variant="pending">Pending</Tag>
+            <span>{t('Status')}</span>
+            <Tag variant="pending">{t('Pending')}</Tag>
           </div>
         </div>
         <button className="btn ghost" style={{ width: '100%' }} onClick={() => navigate('/login')}>
-          Back to login
+          {t('Back to login')}
         </button>
       </div>
     </div>

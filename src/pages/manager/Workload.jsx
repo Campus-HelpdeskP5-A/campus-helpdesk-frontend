@@ -3,9 +3,11 @@ import { getTechniciansWorkload, assignTechnician } from '../../api/users'
 import { getTickets } from '../../api/tickets'
 import { LoadingState, EmptyState, Tag } from '../../components/UI'
 import { useToast } from '../../context/ToastContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function Workload() {
   const { showToast } = useToast()
+  const { t } = useLanguage()
   const [techs, setTechs] = useState(null)
   const [tickets, setTickets] = useState([])
   const [selectedTicket, setSelectedTicket] = useState('')
@@ -39,14 +41,14 @@ export default function Workload() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 18 }}>Workload & assignment</h2>
+      <h2 style={{ marginBottom: 18 }}>{t('Workload & assignment')}</h2>
       <div className="field" style={{ maxWidth: 480 }}>
-        <label>Ticket to assign (open tickets)</label>
+        <label>{t('Ticket to assign')}</label>
         <select value={selectedTicket} onChange={(e) => setSelectedTicket(e.target.value)}>
-          <option value="">Select a ticket…</option>
-          {tickets.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.reference} — {t.title || t.category || 'Ticket'}
+          <option value="">{t('Select a ticket…')}</option>
+          {tickets.map((tk) => (
+            <option key={tk.id} value={tk.id}>
+              {tk.reference} — {tk.title || tk.category || 'Ticket'}
             </option>
           ))}
         </select>
@@ -56,7 +58,7 @@ export default function Workload() {
       ) : (
         <table className="mini">
           <thead>
-            <tr><th>Technician</th><th>Active</th><th>Capacity</th><th>Status</th><th>Urgent</th><th></th></tr>
+            <tr><th>{t('Technician')}</th><th>{t('Active')}</th><th>{t('Capacity')}</th><th>{t('Status')}</th><th>{t('Urgent')}</th><th></th></tr>
           </thead>
           <tbody>
             {techs.map((t) => (
@@ -64,7 +66,7 @@ export default function Workload() {
                 <td>{t.name} {t.id === suggestedId && <span style={{ color: 'var(--success)', fontSize: 11 }}>★ suggested</span>}</td>
                 <td>{t.active}</td>
                 <td>{t.capacity}</td>
-                <td><Tag variant={t.status === 'available' ? 'done' : 'progress'}>{t.status === 'available' ? 'Available' : 'Busy'}</Tag></td>
+                <td><Tag variant={t.status === 'available' ? 'done' : 'progress'}>{t.status === 'available' ? t('Available') : t('Busy')}</Tag></td>
                 <td>{t.urgent}</td>
                 <td>
                   <button
@@ -72,7 +74,7 @@ export default function Workload() {
                     disabled={assigningId === t.id}
                     onClick={() => handleAssign(t.id, t.name)}
                   >
-                    {assigningId === t.id ? '…' : t.id === suggestedId ? 'Assign' : 'Reassign'}
+                    {assigningId === t.id ? '…' : t.id === suggestedId ? t('Assign') : t('Reassign')}
                   </button>
                 </td>
               </tr>
