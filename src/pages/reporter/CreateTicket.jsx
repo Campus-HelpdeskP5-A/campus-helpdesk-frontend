@@ -24,11 +24,7 @@ export default function CreateTicket() {
   const { showToast } = useToast()
   const fileInputRef = useRef(null)
   const [form, setForm] = useState({
-<<<<<<< HEAD
     title: '', description: '', category: '', location: '', asset: '', impact: 'Medium', urgency: 'Medium',
-=======
-    title: '', description: '', category: '', location: '', asset: '', urgency: 'Medium', impact: 'Medium',
->>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
   })
   const [attachment, setAttachment] = useState(null)
   const [attachmentError, setAttachmentError] = useState(null)
@@ -36,27 +32,16 @@ export default function CreateTicket() {
   const [error, setError] = useState(null)
   const [categories, setCategories] = useState([])
   const [locations, setLocations] = useState([])
-<<<<<<< HEAD
-
-  useEffect(() => {
-    Promise.all([getCategories(), getLocations()])
-      .then(([categoryList, locationList]) => {
-        setCategories(categoryList.filter((c) => c.active !== false))
-        setLocations(locationList)
-      })
-      .catch(() => setError('تعذر تحميل بيانات الفئات والمواقع. حدّث الصفحة وحاول تاني.'))
-=======
 
   const isEmergency = containsEmergencyKeyword(form.title) || containsEmergencyKeyword(form.description)
 
   useEffect(() => {
-    getCategories()
-      .then((list) => setCategories(list.filter((c) => c.active !== false)))
-      .catch(() => setError('تعذر تحميل الفئات. حدّث الصفحة وحاول تاني.'))
-    getLocations()
-      .then(setLocations)
-      .catch(() => setError('تعذر تحميل الأماكن. حدّث الصفحة وحاول تاني.'))
->>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
+    Promise.all([getCategories(), getLocations()])
+      .then(([categoryList, locationList]) => {
+        setCategories((categoryList || []).filter((c) => c.active !== false))
+        setLocations(locationList || [])
+      })
+      .catch(() => setError('تعذر تحميل بيانات الفئات والمواقع. حدّث الصفحة وحاول تاني.'))
   }, [])
 
   function update(field, value) {
@@ -99,15 +84,7 @@ export default function CreateTicket() {
       asset: form.asset.trim(),
       impact: form.impact,
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    if (!clean.title || !clean.description || !clean.location || !clean.impact) {
-=======
-       if (!clean.title || !clean.description || !clean.location) {
->>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
-=======
     if (!clean.title || !clean.description || !clean.location) {
->>>>>>> 3cd98ae (HLP-FR-02, Sprint 1, Frontend: Update)
       setError('Title و Description و Building/room مطلوبين ومينفعش يكونوا مسافات بس.')
       return
     }
@@ -159,11 +136,7 @@ export default function CreateTicket() {
             <select required value={form.location} onChange={(e) => update('location', e.target.value)}>
               <option value="">Select location</option>
               {locations.map((l) => (
-<<<<<<< HEAD
-                <option key={l.id} value={l.id}>{l.label}</option>
-=======
-                <option key={l.id} value={l.id}>{l.name}</option>
->>>>>>> e046bbc (HLP-FR-02, Sprint 1, Frontend: Done)
+                <option key={l.id} value={l.id}>{l.label ?? l.name}</option>
               ))}
             </select>
           </div>
@@ -181,6 +154,8 @@ export default function CreateTicket() {
               <option>High</option>
             </select>
           </div>
+        </div>
+        <div className="grid2">
           <div className="field">
             <label>Urgency</label>
             <select value={form.urgency} onChange={(e) => update('urgency', e.target.value)}>
@@ -189,14 +164,6 @@ export default function CreateTicket() {
               <option>High</option>
             </select>
           </div>
-        </div>
-        <div className="field">
-          <label>Impact</label>
-          <select value={form.impact} onChange={(e) => update('impact', e.target.value)}>
-            <option>Low</option>
-            <option>Medium</option>
-            <option>High</option>
-          </select>
         </div>
         <div className="field">
           <label>Attachment</label>

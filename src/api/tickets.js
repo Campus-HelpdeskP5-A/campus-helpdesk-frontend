@@ -195,13 +195,6 @@ export async function createTicket(payload, reporterName) {
   const normalizedImpact = URGENCY_TO_API[impact] || String(impact || '').toUpperCase()
 
   const body = {
-<<<<<<< HEAD
-    title,
-    description,
-    category_id: category,
-    urgency: URGENCY_TO_API[urgency] || urgency,
-    ...(asset ? { asset_id: asset } : {}),
-=======
     ...(title ? { title: String(title).trim() } : {}),
     ...(description ? { description: String(description).trim() } : {}),
     ...(category ? { category_id: String(category) } : {}),
@@ -209,7 +202,6 @@ export async function createTicket(payload, reporterName) {
     ...(normalizedUrgency ? { urgency: normalizedUrgency } : {}),
     ...(normalizedImpact ? { impact: normalizedImpact } : {}),
     ...(asset ? { asset_id: String(asset).trim() } : {}),
->>>>>>> 3cd98ae (HLP-FR-02, Sprint 1, Frontend: Update)
   }
 
   const created = normalizeTicket(unwrap(await api.post('/tickets', body)))

@@ -5,14 +5,6 @@ let categoriesStore = [...categoriesMock]
 let locationsStore = null
 
 /** GET /categories -> Category[] */
-export async function getLocations() {
-  if (USE_MOCKS) return mockDelay([])
-  return asList(await api.get('/locations')).map((l) => ({
-    ...l,
-    id: l.id ?? l.location_id,
-    label: l.label ?? [l.building, l.floor, l.room_code].filter(Boolean).join(' — '),
-  }))
-}
 
 /** GET /support-teams -> SupportTeam[] */
 export async function getSupportTeams() {
@@ -77,10 +69,15 @@ export async function getLocations() {
     }
     return mockDelay(locationsStore)
   }
-  return asList(await api.get('/locations')).map((l) => ({
-    id: l.id ?? l.location_id,
-    name: [l.building, l.room_code].filter(Boolean).join(' — '),
-  }))
+  return asList(await api.get('/locations')).map((l) => {
+    const name = l.name ?? l.label ?? [l.building, l.room_code].filter(Boolean).join(' — ')
+    return {
+      ...l,
+      id: l.id ?? l.location_id,
+      name,
+      label: l.label ?? name,
+    }
+  })
 }
 
 // Other configuration endpoints your backend will likely also expose:
